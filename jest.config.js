@@ -1,3 +1,4 @@
+// jest with typescript: https://jestjs.io/docs/en/getting-started#using-typescript
 module.exports = {
   clearMocks: true,
   testEnvironment: "node",

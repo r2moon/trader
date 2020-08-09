@@ -1,22 +1,25 @@
 require("dotenv").config();
+const {ethers} = require("ethers");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.INFURA_URI));
+
+const infuraUri = process.env.INFURA_URI || "";
+const infuraTestnetUri = process.env.INFURA_TESTNET_URI || "";
+const privKey = process.env.PRIVATE_KEY || "";
 
 module.exports = {
   networks: {
     mainnet: {
       networkCheckTimeout: 10000,
-      provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
+      provider: () => new HDWalletProvider(privKey, infuraUri),
       network_id: 1,
-      gasPrice: web3.utils.toWei("41", "gwei"), // https://ethgasstation.info/
+      gasPrice: ethers.utils.parseEther("41").toString(), // https://ethgasstation.info/
       gas: 6000000,
     },
     testnet: {
       networkCheckTimeout: 10000,
-      provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_TESTNET_URI),
+      provider: () => new HDWalletProvider(privKey, infuraTestnetUri),
       network_id: 42,
-      gasPrice: web3.utils.toWei("56", "gwei"),
+      gasPrice: ethers.utils.parseEther("56").toString(),
     },
     development: {
       host: "127.0.0.1",
@@ -26,7 +29,7 @@ module.exports = {
     mainnetFork: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*",
+      network_id: 1,
       skipDryRun: true,
     },
     tenderly: {
