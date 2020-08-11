@@ -1,16 +1,13 @@
 require("dotenv").config();
+import chalk from "chalk";
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import {VaultManagerFactory} from "../types/ethers-contracts/VaultManagerFactory";
 import {ChainId, Token, TokenAmount, Pair} from "@uniswap/sdk";
-
 import addresses from "../addresses";
-import chalk from "chalk";
-import {startGanache, wallet, provider, deployContracts, Addresses, networkId} from "./ganache";
-
+import {startGanache, wallet, provider, deployContracts, Addresses} from "./ganache";
 import Ganache from "ganache-core";
 import {Ierc20Factory} from "../types/ethers-contracts/Ierc20Factory";
-import {doesNotMatch} from "assert";
 import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
 
 jest.setTimeout(100000);
@@ -22,6 +19,7 @@ describe("Test flashloan", () => {
 
   const daiAddress = addresses.tokens.dai;
   const wethAddress = addresses.tokens.weth;
+  const ethAddress = addresses.tokens.eth;
 
   beforeAll(async (done) => {
     ganacheServer = await startGanache();
@@ -46,7 +44,6 @@ describe("Test flashloan", () => {
   });
 
   test("should get kayber expected rate", async (done) => {
-    const ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider());
     const amount = ethers.utils.parseEther("1").toString();
 
@@ -74,7 +71,6 @@ describe("Test flashloan", () => {
   });
 
   test("should get eth price", async (done) => {
-    const ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider());
     const amount = ethers.utils.parseEther("1").toString();
 
