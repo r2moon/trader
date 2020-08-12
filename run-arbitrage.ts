@@ -84,15 +84,8 @@ const main = async () => {
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
       const [gasPrice, gasLimit] = await Promise.all([
         provider.getGasPrice(),
-        // todo estimateGas throws `gas required exceeds allowance or always failing transaction` error
-        // flashloan.estimateGas.initateFlashLoan(
-        //   addresses.dydx.solo,
-        //   addresses.tokens.dai,
-        //   AMOUNT_DAI_WEI,
-        //   DIRECTION.KYBER_TO_UNISWAP,
-        //   options
-        // ),
-
+        // todo: estimateGas throws `gas required exceeds allowance or always failing transaction` error
+        // flashloan.estimateGas.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.KYBER_TO_UNISWAP),
         // hard code temporarily
         network.gas,
       ]);
