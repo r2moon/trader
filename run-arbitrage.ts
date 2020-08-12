@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+import fs from "fs";
 import isNode from "detect-node";
 import nodeFetch from "node-fetch";
 import chalk from "chalk";
@@ -13,6 +13,9 @@ import {ChainId, Token, TokenAmount, Pair} from "@uniswap/sdk";
 import {FlashloanFactory} from "./types/ethers-contracts/FlashloanFactory";
 import FlashloanContract from "./build/contracts/Flashloan.json";
 import truffleConfig from "./truffle-config";
+
+import {Flashloan} from "./types/ethers-contracts/Flashloan";
+import {MongoClient} from "mongodb";
 
 const fetch = isNode ? nodeFetch : window.fetch;
 
@@ -112,6 +115,8 @@ const main = async () => {
         const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.KYBER_TO_UNISWAP, options);
         const recipt = await tx.wait();
         console.log(`Transaction hash: ${recipt.transactionHash}`);
+
+        saveFlashloanEventLog(flashloan, block);
       }
     } else if (uniswapRates.buy < kyberRates.sell) {
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
@@ -139,6 +144,8 @@ const main = async () => {
         const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.UNISWAP_TO_KYBER, options);
         const recipt = await tx.wait();
         console.log(`Transaction hash: ${recipt.transactionHash}`);
+
+        saveFlashloanEventLog(flashloan, block);
       }
     }
   });
@@ -170,6 +177,45 @@ const getKyberPrice = async (type: Action): Promise<number> => {
   const response = await fetch(endpoint);
   const result = await response.json();
   return result.data / AMOUNT_ETH;
+};
+
+// save event log to mongodb or local file
+const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
+  const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
+  const logs = await flashloan.provider.getLogs({
+    fromBlock: block,
+    toBlock: "latest",
+    address: flashloan.address,
+    topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
+  });
+
+  logs.forEach((log) => {
+    const logData = flashloan.interface.parseLog(log);
+    const record = logData.args.toString();
+    if (config.save_to_mongodb) {
+      saveToMongoDB(record);
+      return;
+    }
+    // else save to local file
+    fs.appendFile("transaction.json", record, (err) => {
+      if (err) console.log(err);
+    });
+  });
+};
+
+// save data to mongodb atlas
+const saveToMongoDB = async (record: string) => {
+  // mongodb atlas
+  const connectString = `mongodb+srv://min:${process.env.MONGODB_PASSWORD}@cluster0-eosoe.mongodb.net/test?retryWrites=true&w=majority`;
+  const mongoClient = await MongoClient.connect(connectString, {
+    useUnifiedTopology: true,
+  });
+
+  console.log("Connected to Database");
+  const db = mongoClient.db("flashloan");
+  const profits = db.collection("profits");
+  const result = await profits.insertOne(record).catch((err: Error) => console.error(err));
+  console.log(result);
 };
 
 // main logic

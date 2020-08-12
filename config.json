@@ -1,4 +1,5 @@
 {
   "amount_eth": 10,
-  "use_mainnet_fork": false
+  "use_mainnet_fork": false,
+  "save_to_mongodb": true
 }
