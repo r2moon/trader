@@ -43,7 +43,7 @@ const ethAddress = addresses.tokens.eth;
 const soloMarginAddress = addresses.dydx.solo;
 let ethPrice: number;
 
-const run = async () => {
+const main = async () => {
   const networkId = network.network_id;
   console.log(`Network ID is ${networkId}`);
 
@@ -180,4 +180,4 @@ const getKyberPrice = async (type: Action): Promise<number> => {
 };
 
 // main logic
-run();
+main();
