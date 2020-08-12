@@ -13,8 +13,8 @@ export class Price {
 
   // fetch uniswap buy / sell rate
   static FetchUniswapRates = async (ethPrice: number): Promise<Price> => {
-    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString());
-    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
+    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString()).toString();
+    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString()).toString();
 
     const DAI = new Token(ChainId.MAINNET, daiAddress, 18);
     const daiWeth = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
@@ -23,14 +23,14 @@ export class Price {
     const buyRoute = new Route([daiWeth], DAI);
 
     const uniswapResults = await Promise.all([
-      new Trade(buyRoute, new TokenAmount(DAI, amount_dai_wei.toString()), TradeType.EXACT_INPUT),
-      new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount_eth_wei.toString()), TradeType.EXACT_INPUT),
+      new Trade(buyRoute, new TokenAmount(DAI, amount_eth_wei), TradeType.EXACT_INPUT),
+      new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount_dai_wei), TradeType.EXACT_INPUT),
     ]);
 
     return {
       // todo: uniswapResults[0].executionPrice or uniswapResults[0].nextMidPrice?
-      buy: (amount_eth * ethPrice) / parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
-      sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)) / amount_eth,
+      buy: parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
+      sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)),
     };
   };
 

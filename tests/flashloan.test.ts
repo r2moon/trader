@@ -78,8 +78,8 @@ describe("Test flashloan", () => {
       new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount_dai), TradeType.EXACT_INPUT),
     ]);
 
-    const buy = 400 / parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6));
-    const sell = parseFloat(uniswapResults[1].executionPrice.toSignificant(6)) / 1;
+    const buy = parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6));
+    const sell = parseFloat(uniswapResults[1].executionPrice.toSignificant(6));
     console.log(`buy: ${buy}`);
     console.log(`sell: ${sell}`);
 

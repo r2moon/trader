@@ -35,7 +35,6 @@ const wallet = new ethers.Wallet(privKey, provider);
 const amount_eth = Util.Config.amount_eth;
 const network = Util.Config.network;
 const daiAddress = Util.Address.daiAddress;
-const wethAddress = Util.Address.wethAddress;
 const ethAddress = Util.Address.ethAddress;
 const soloMarginAddress = Util.Address.soloMarginAddress;
 
@@ -50,10 +49,7 @@ const main = async () => {
   // https://docs.ethers.io/v5/api/providers/provider/
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
-
-    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString());
     const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
-
     // fetch kyber buy / sell rates
     const kyberRates = await Price.FetchKyberRates();
     console.log(chalk.green("Kyber ETH/DAI"));
