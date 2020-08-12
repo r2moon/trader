@@ -3,7 +3,7 @@ import chalk from "chalk";
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import {VaultManagerFactory} from "../types/ethers-contracts/VaultManagerFactory";
-import {ChainId, Token, TokenAmount, Pair} from "@uniswap/sdk";
+import {ChainId, Token, TokenAmount, Pair, Fetcher, WETH, Route, Trade, TradeType} from "@uniswap/sdk";
 import addresses from "../addresses";
 import {startGanache, wallet, provider, deployContracts, Addresses} from "./ganache";
 import Ganache from "ganache-core";
@@ -35,7 +35,7 @@ describe("Test flashloan", () => {
     done();
   });
 
-  test("account should be initialized", async (done) => {
+  test.skip("account should be initialized", async (done) => {
     expect(account).not.toBe(undefined);
     expect(account).not.toBe("");
     const balance = ethers.utils.formatEther(await provider().getBalance(account));
@@ -43,7 +43,7 @@ describe("Test flashloan", () => {
     done();
   });
 
-  test("should get kayber expected rate", async (done) => {
+  test.skip("should get kayber expected rate", async (done) => {
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider());
     const amount = ethers.utils.parseEther("1").toString();
 
@@ -59,18 +59,36 @@ describe("Test flashloan", () => {
 
   test("should get uniswap amount out", async (done) => {
     const amount = ethers.utils.parseEther("1").toString();
-    const [dai, weth] = await Promise.all([daiAddress, wethAddress].map((tokenAddress) => Token.fetchData(ChainId.MAINNET, tokenAddress)));
-    const daiWeth = await Pair.fetchData(dai, weth);
+    const amount_dai = ethers.utils.parseEther("400").toString();
+
+    const DAI = new Token(ChainId.MAINNET, daiAddress, 18);
+    const daiWeth = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
 
     // input weth, get dai
-    const amountOutDai = daiWeth.getOutputAmount(new TokenAmount(weth, amount));
+    const amountOutDai = daiWeth.getOutputAmount(new TokenAmount(WETH[DAI.chainId], amount));
     const amountOutDaiExact = amountOutDai[0].toExact();
     console.log(`AmountOut Dai(Exact): ${amountOutDaiExact}`);
     expect(amountOutDai).not.toBe(null);
+
+    const sellRoute = new Route([daiWeth], WETH[DAI.chainId]);
+    const buyRoute = new Route([daiWeth], DAI);
+
+    const uniswapResults = await Promise.all([
+      new Trade(buyRoute, new TokenAmount(DAI, amount), TradeType.EXACT_INPUT),
+      new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount_dai), TradeType.EXACT_INPUT),
+    ]);
+
+    const buy = 400 / parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6));
+    const sell = parseFloat(uniswapResults[1].executionPrice.toSignificant(6)) / 1;
+    console.log(`buy: ${buy}`);
+    console.log(`sell: ${sell}`);
+
+    expect(buy).toBeGreaterThan(0);
+    expect(sell).toBeGreaterThan(0);
     done();
   });
 
-  test("should get eth price", async (done) => {
+  test.skip("should get eth price", async (done) => {
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider());
     const amount = ethers.utils.parseEther("1").toString();
 
@@ -82,7 +100,7 @@ describe("Test flashloan", () => {
     done();
   });
 
-  test("borrowing DAI from Maker", async (done) => {
+  test.skip("borrowing DAI from Maker", async (done) => {
     const dai = Ierc20Factory.connect(daiAddress, wallet());
     const vaultManager = VaultManagerFactory.connect(contractAddresses.vaultManager, wallet()); // wallet instead of provider
 
@@ -113,7 +131,7 @@ describe("Test flashloan", () => {
     done();
   });
 
-  test("transfer half of DAI to faucet", async (done) => {
+  test.skip("transfer half of DAI to faucet", async (done) => {
     const dai = Ierc20Factory.connect(daiAddress, wallet());
     const amount = ethers.utils.parseEther("1000");
 
@@ -135,7 +153,7 @@ describe("Test flashloan", () => {
     done();
   });
 
-  test("initiate Flashloan", async (done) => {
+  test.skip("initiate Flashloan", async (done) => {
     const flashloan = FlashloanFactory.connect(contractAddresses.flashloan, wallet());
     const amount = ethers.utils.parseEther("1000");
 

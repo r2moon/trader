@@ -11,7 +11,9 @@
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
     "deploy:mainnet": "truffle migrate --reset --network mainnet",
-    "test": "jest --detectOpenHandles"
+    "test": "jest --detectOpenHandles",
+    "docker:build": "docker build -t flashloan .",
+    "docker:run": "docker run flashloan"
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.10.4",

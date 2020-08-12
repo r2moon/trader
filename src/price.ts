@@ -30,7 +30,7 @@ export class Price {
     return {
       // todo: uniswapResults[0].executionPrice or uniswapResults[0].nextMidPrice?
       buy: (amount_eth * ethPrice) / parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
-      sell: parseFloat(uniswapResults[1].executionPrice.invert().toSignificant(6)) / amount_eth,
+      sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)) / amount_eth,
     };
   };
 
