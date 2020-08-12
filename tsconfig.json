@@ -13,6 +13,6 @@
     "outDir": "dest",
     "skipLibCheck": true
   },
-  "include": ["tests", "types", "addresses"],
+  "include": ["tests", "addresses", "src"],
   "exclude": ["dest", "node_modules"]
 }

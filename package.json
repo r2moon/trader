@@ -6,7 +6,7 @@
   "scripts": {
     "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
     "prepare": "tsc",
-    "start": "ts-node run-arbitrage.ts",
+    "start": "ts-node src/run-arbitrage.ts",
     "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<infura project id>> --account='<<private key>>,1000000000000000000000'",
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
@@ -17,7 +17,7 @@
     "@babel/preset-typescript": "^7.10.4",
     "@studydefi/money-legos": "^2.3.5",
     "@truffle/hdwallet-provider": "^1.0.35",
-    "@uniswap/sdk": "^2.0.5",
+    "@uniswap/sdk": "^3.0.3-beta.1",
     "chalk": "^4.1.0",
     "detect-node": "^2.0.4",
     "dotenv": "^8.2.0",
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@babel/core": "^7.11.1",
     "@babel/preset-env": "^7.11.0",
+    "@extra-array/linspace": "^2.3.18",
     "@typechain/ethers-v5": "^1.0.0",
     "@types/detect-node": "^2.0.0",
     "@types/jest": "^26.0.9",

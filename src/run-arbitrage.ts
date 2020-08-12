@@ -1,27 +1,19 @@
 require("dotenv").config();
 import fs from "fs";
-import isNode from "detect-node";
-import nodeFetch from "node-fetch";
 import chalk from "chalk";
-import config from "./config.json";
 
-import addresses from "./addresses";
-import {KyberNetworkProxyFactory} from "./types/ethers-contracts/KyberNetworkProxyFactory";
+import addresses from "../addresses";
+import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import {ethers} from "ethers";
-import {ChainId, Token, TokenAmount, Pair} from "@uniswap/sdk";
 
-import {FlashloanFactory} from "./types/ethers-contracts/FlashloanFactory";
-import FlashloanContract from "./build/contracts/Flashloan.json";
-import truffleConfig from "./truffle-config";
+import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
+import FlashloanContract from "../build/contracts/Flashloan.json";
 
-import {Flashloan} from "./types/ethers-contracts/Flashloan";
+import {Flashloan} from "../types/ethers-contracts/Flashloan";
 import {MongoClient} from "mongodb";
-
-const fetch = isNode ? nodeFetch : window.fetch;
-
-// read eth amount and use mainnet fork flag from config.json
-const AMOUNT_ETH = config.amount_eth;
-const network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
+import {Util} from "./util";
+import {Price} from "./price";
+import config from "../config.json";
 
 // read infura uri and private key from .env
 const infuraUri = process.env.INFURA_URI;
@@ -40,10 +32,13 @@ if (!privKey) {
 const provider = new ethers.providers.WebSocketProvider(infuraUri);
 const wallet = new ethers.Wallet(privKey, provider);
 
-const daiAddress = addresses.tokens.dai;
-const wethAddress = addresses.tokens.weth;
-const ethAddress = addresses.tokens.eth;
-const soloMarginAddress = addresses.dydx.solo;
+const amount_eth = Util.Config.amount_eth;
+const network = Util.Config.network;
+const daiAddress = Util.Address.daiAddress;
+const wethAddress = Util.Address.wethAddress;
+const ethAddress = Util.Address.ethAddress;
+const soloMarginAddress = Util.Address.soloMarginAddress;
+
 let ethPrice: number;
 
 const main = async () => {
@@ -56,30 +51,15 @@ const main = async () => {
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
 
-    const AMOUNT_ETH_WEI = ethers.utils.parseEther(AMOUNT_ETH.toString());
-    const AMOUNT_DAI_WEI = ethers.utils.parseEther((AMOUNT_ETH * ethPrice).toString());
+    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString());
+    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
 
     // fetch kyber buy / sell rates
-    const [buy, sell] = await Promise.all([getKyberPrice(Action.Buy), getKyberPrice(Action.Sell)]);
-    const kyberRates = {buy, sell};
-
+    const kyberRates = await Price.FetchKyberRates();
     console.log(chalk.green("Kyber ETH/DAI"));
     console.log(kyberRates);
 
-    // fetch uniswap buy / sell rates
-    const [dai, weth] = await Promise.all([daiAddress, wethAddress].map((tokenAddress) => Token.fetchData(ChainId.MAINNET, tokenAddress)));
-    const daiWeth = await Pair.fetchData(dai, weth);
-
-    const uniswapResults = await Promise.all([
-      daiWeth.getOutputAmount(new TokenAmount(dai, AMOUNT_DAI_WEI.toString())),
-      daiWeth.getOutputAmount(new TokenAmount(weth, AMOUNT_ETH_WEI.toString())),
-    ]);
-
-    const uniswapRates = {
-      buy: (AMOUNT_ETH * ethPrice) / parseFloat(uniswapResults[0][0].toExact()),
-      sell: parseFloat(uniswapResults[1][0].toExact()) / AMOUNT_ETH,
-    };
-
+    const uniswapRates = await Price.FetchUniswapRates(ethPrice);
     console.log(chalk.blue("Uniswap ETH/DAI"));
     console.log(uniswapRates);
 
@@ -88,7 +68,7 @@ const main = async () => {
       const [gasPrice, gasLimit] = await Promise.all([
         provider.getGasPrice(),
         // todo: estimateGas throws `gas required exceeds allowance or always failing transaction` error
-        // flashloan.estimateGas.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.KYBER_TO_UNISWAP),
+        // flashloan.estimateGas.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, Direction.KYBER_TO_UNISWAP),
         // hard code temporarily
         network.gas,
       ]);
@@ -96,7 +76,7 @@ const main = async () => {
       const txCost = gasPrice.mul(gasLimit);
       console.log(`txCost is ${txCost}`);
 
-      const gross = AMOUNT_ETH * (uniswapRates.sell - kyberRates.buy);
+      const gross = amount_eth * (uniswapRates.sell - kyberRates.buy);
       console.log(`gross is ${gross}`);
 
       const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
@@ -112,7 +92,7 @@ const main = async () => {
         console.log(`Expected profit: ${profit} dai`);
 
         const options = {gasPrice, gasLimit};
-        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.KYBER_TO_UNISWAP, options);
+        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, Direction.KYBER_TO_UNISWAP, options);
         const recipt = await tx.wait();
         console.log(`Transaction hash: ${recipt.transactionHash}`);
 
@@ -125,7 +105,7 @@ const main = async () => {
       const txCost = gasPrice.mul(gasLimit);
       console.log(`txCost is ${txCost}`);
 
-      const gross = AMOUNT_ETH * (kyberRates.sell - uniswapRates.buy);
+      const gross = amount_eth * (kyberRates.sell - uniswapRates.buy);
       console.log(`gross is ${gross}`);
 
       const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
@@ -141,7 +121,7 @@ const main = async () => {
         console.log(`Expected profit: ${profit} dai`);
 
         const options = {gasLimit, gasPrice};
-        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, AMOUNT_DAI_WEI, Direction.UNISWAP_TO_KYBER, options);
+        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, Direction.UNISWAP_TO_KYBER, options);
         const recipt = await tx.wait();
         console.log(`Transaction hash: ${recipt.transactionHash}`);
 
@@ -166,18 +146,6 @@ enum Direction {
   KYBER_TO_UNISWAP = 0,
   UNISWAP_TO_KYBER = 1,
 }
-
-enum Action {
-  Sell = "sell",
-  Buy = "buy",
-}
-
-const getKyberPrice = async (type: Action): Promise<number> => {
-  const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${AMOUNT_ETH}&type=${type}&platformFee=8`;
-  const response = await fetch(endpoint);
-  const result = await response.json();
-  return result.data / AMOUNT_ETH;
-};
 
 // save event log to mongodb or local file
 const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
