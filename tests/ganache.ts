@@ -44,8 +44,8 @@ export async function deployContracts(): Promise<Addresses> {
   await vaultManagerContract.deployed();
   await daiFaucetContract.deployed();
 
-  console.log(`VaultManager Address: ${vaultManagerContract.address}`);
-  console.log(`DaiFaucet Address: ${daiFaucetContract.address}`);
+  // console.log(`VaultManager Address: ${vaultManagerContract.address}`);
+  // console.log(`DaiFaucet Address: ${daiFaucetContract.address}`);
 
   console.log(chalk.green("Deploying Flashloan Contract"));
   const flashloanFactory = new ethers.ContractFactory(FlashloanContract.abi, FlashloanContract.bytecode, wallet());
@@ -59,7 +59,7 @@ export async function deployContracts(): Promise<Addresses> {
   );
 
   await flashloanContract.deployed();
-  console.log(`Flashloan Address: ${flashloanContract.address}`);
+  // console.log(`Flashloan Address: ${flashloanContract.address}`);
   return {
     vaultManager: vaultManagerContract.address,
     daiFaucet: daiFaucetContract.address,

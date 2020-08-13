@@ -59,16 +59,10 @@ describe("Test flashloan", () => {
 
   test("should get uniswap amount out", async (done) => {
     const amount = ethers.utils.parseEther("1").toString();
-    const amount_dai = ethers.utils.parseEther("400").toString();
+    const amount_dai = ethers.utils.parseEther("10000").toString();
 
     const DAI = new Token(ChainId.MAINNET, daiAddress, 18);
     const daiWeth = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
-
-    // input weth, get dai
-    const amountOutDai = daiWeth.getOutputAmount(new TokenAmount(WETH[DAI.chainId], amount));
-    const amountOutDaiExact = amountOutDai[0].toExact();
-    console.log(`AmountOut Dai(Exact): ${amountOutDaiExact}`);
-    expect(amountOutDai).not.toBe(null);
 
     const sellRoute = new Route([daiWeth], WETH[DAI.chainId]);
     const buyRoute = new Route([daiWeth], DAI);
