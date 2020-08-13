@@ -1,6 +1,7 @@
 import config from "../config.json";
 import addresses from "../addresses";
 import truffleConfig from "../truffle-config";
+import {ethers} from "ethers";
 
 export class Util {
   static Config = class {
@@ -9,9 +10,10 @@ export class Util {
   };
 
   static Address = class {
-    static daiAddress = addresses.tokens.dai;
-    static wethAddress = addresses.tokens.weth;
-    static ethAddress = addresses.tokens.eth;
-    static soloMarginAddress = addresses.dydx.solo;
+    // to checksum address
+    static daiAddress = ethers.utils.getAddress(addresses.tokens.dai);
+    static wethAddress = ethers.utils.getAddress(addresses.tokens.weth);
+    static ethAddress = ethers.utils.getAddress(addresses.tokens.eth);
+    static soloMarginAddress = ethers.utils.getAddress(addresses.dydx.solo);
   };
 }

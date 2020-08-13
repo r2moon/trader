@@ -68,8 +68,8 @@ describe("Test flashloan", () => {
     const buyRoute = new Route([daiWeth], DAI);
 
     const uniswapResults = await Promise.all([
-      new Trade(buyRoute, new TokenAmount(DAI, amount), TradeType.EXACT_INPUT),
-      new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount_dai), TradeType.EXACT_INPUT),
+      new Trade(buyRoute, new TokenAmount(DAI, amount_dai), TradeType.EXACT_INPUT),
+      new Trade(sellRoute, new TokenAmount(WETH[DAI.chainId], amount), TradeType.EXACT_INPUT),
     ]);
 
     const buy = parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6));

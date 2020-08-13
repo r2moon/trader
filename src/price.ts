@@ -25,12 +25,10 @@ export class Price {
     const daiToWethRoute = new Route([daiWeth], DAI);
 
     const uniswapResults = await Promise.all([
-      new Trade(daiToWethRoute, new TokenAmount(DAI, amount_eth_wei), TradeType.EXACT_INPUT),
-      new Trade(wethToDaiRoute, new TokenAmount(WETH[DAI.chainId], amount_dai_wei), TradeType.EXACT_INPUT),
+      new Trade(daiToWethRoute, new TokenAmount(DAI, amount_dai_wei), TradeType.EXACT_INPUT),
+      new Trade(wethToDaiRoute, new TokenAmount(WETH[DAI.chainId], amount_eth_wei), TradeType.EXACT_INPUT),
     ]);
 
-    // https://www.investopedia.com/terms/a/averageprice.asp
-    // https://www.moneydero.com/blog/bid-ask-mid-and-last-prices
     return {
       // todo: uniswapResults[0].executionPrice or uniswapResults[0].nextMidPrice?
       buy: parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
