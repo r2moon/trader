@@ -1,5 +1,5 @@
 {
-  "amount_eth": 1,
+  "amount_eth": 100,
   "use_mainnet_fork": false,
   "save_to_mongodb": true,
   "txcost_gas_limit": 1200000,
