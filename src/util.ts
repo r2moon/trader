@@ -10,6 +10,8 @@ export class Util {
     static network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
     static txcost_gas_price_buff_in_wei = config.txcost_gas_price_buff_in_wei;
     static txcost_gas_limit = config.txcost_gas_limit;
+    static kyber_service_fee = config.kyber_service_fee;
+    static uniswap_service_fee = config.uniswap_service_fee;
   };
 
   static Env = class {

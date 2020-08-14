@@ -36,6 +36,8 @@ const amount_eth = Util.Config.amount_eth;
 const network = Util.Config.network;
 const txcost_gas_limit = Util.Config.txcost_gas_limit;
 const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
+const kyber_service_fee = Util.Config.kyber_service_fee;
+const uniswap_service_fee = Util.Config.uniswap_service_fee;
 
 const daiAddress = Util.Address.daiAddress;
 const ethAddress = Util.Address.ethAddress;
@@ -53,7 +55,10 @@ const main = async () => {
   provider
     .on("block", async (block) => {
       console.log(`New block received. Block number: ${block}`);
-      const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
+
+      const amount_dai = amount_eth * ethPrice;
+      const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
+
       // fetch kyber buy / sell rates
       const kyberRates = await Price.FetchKyberRates();
       console.log(chalk.green("Kyber ETH/DAI"));
@@ -78,13 +83,36 @@ const main = async () => {
         console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
 
         const txCost = gasPrice.mul(gasLimit);
-        console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH`);
+        console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)`);
 
         const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
         const gross = amount_eth * unitGross;
         console.log(`gross is ${gross} USD`);
 
-        const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
+        // let uniswapServiceFee: number, kyberServiceFee: number;
+        // if (direction == Direction.KYBER_TO_UNISWAP) {
+        //   // dai to eth in kyber. fee = dai amount * 0.2% DAI
+        //   kyberServiceFee = amount_dai * kyber_service_fee;
+        //   // eth to dai in uniswap. fee = eth_amount * 0.3% ETH
+        //   uniswapServiceFee = amount_eth * uniswap_service_fee;
+        //   // convert uniswap service fee from eth to dai
+        //   uniswapServiceFee = uniswapServiceFee * ethPrice;
+        // } else {
+        //   // dai to eth in uniswap. fee = dai amount * 0.3% DAI
+        //   uniswapServiceFee = amount_dai * uniswap_service_fee;
+        //   // eth to dai in kyber. fee = eth amount * 0.2% ETH
+        //   kyberServiceFee = amount_eth * kyber_service_fee;
+        //   // convert kyber service fee from eth to dai
+        //   kyberServiceFee = kyberServiceFee * ethPrice;
+        // }
+        // since amount_eth * ethPrice = amount_dai, so we simpify it
+        const kyberServiceFee = amount_dai * kyber_service_fee;
+        const uniswapServiceFee = amount_dai * uniswap_service_fee;
+
+        console.log(`kyber service fee is ${kyberServiceFee} USD`);
+        console.log(`uniswap service fee is ${uniswapServiceFee} USD`);
+
+        const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice + kyberServiceFee + uniswapServiceFee;
         console.log(`cost is ${cost} USD`);
 
         const profit = gross - cost;
