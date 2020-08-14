@@ -28,6 +28,7 @@ if (!privKey) {
 }
 
 // init provider and wallet
+// https://docs.ethers.io/v5/api/providers/other/#WebSocketProvider
 const provider = new ethers.providers.WebSocketProvider(infuraUri);
 const wallet = new ethers.Wallet(privKey, provider);
 
@@ -49,66 +50,65 @@ const main = async () => {
   updateEtherPrice();
 
   // https://docs.ethers.io/v5/api/providers/provider/
-  provider.on("block", async (block) => {
-    // ignore failed to meet quorum error
-    if (block <= 0) return;
+  provider
+    .on("block", async (block) => {
+      console.log(`New block received. Block number: ${block}`);
+      const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
+      // fetch kyber buy / sell rates
+      const kyberRates = await Price.FetchKyberRates();
+      console.log(chalk.green("Kyber ETH/DAI"));
+      console.log(kyberRates);
 
-    console.log(`New block received. Block number: ${block}`);
-    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
-    // fetch kyber buy / sell rates
-    const kyberRates = await Price.FetchKyberRates();
-    console.log(chalk.green("Kyber ETH/DAI"));
-    console.log(kyberRates);
+      const uniswapRates = await Price.FetchUniswapRates(ethPrice);
+      console.log(chalk.blue("Uniswap ETH/DAI"));
+      console.log(uniswapRates);
 
-    const uniswapRates = await Price.FetchUniswapRates(ethPrice);
-    console.log(chalk.blue("Uniswap ETH/DAI"));
-    console.log(uniswapRates);
+      if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
+        const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
+        const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
 
-    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
-      const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
-      const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
+        const [gasPrice, gasLimit] = await Promise.all([
+          // avg gas price + 10Gwei set in config.json
+          (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
+          // set gaslimit to 1200000 based on this tx
+          // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
+          txcost_gas_limit,
+        ]);
 
-      const [gasPrice, gasLimit] = await Promise.all([
-        // avg gas price + 10Gwei set in config.json
-        (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
-        // set gaslimit to 1200000 based on this tx
-        // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
-        txcost_gas_limit,
-      ]);
+        console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
 
-      console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
+        const txCost = gasPrice.mul(gasLimit);
+        console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH`);
 
-      const txCost = gasPrice.mul(gasLimit);
-      console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH`);
+        const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
+        const gross = amount_eth * unitGross;
+        console.log(`gross is ${gross} USD`);
 
-      const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
-      const gross = amount_eth * unitGross;
-      console.log(`gross is ${gross} USD`);
+        const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
+        console.log(`cost is ${cost} USD`);
 
-      const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
-      console.log(`cost is ${cost} USD`);
+        const profit = gross - cost;
+        console.log(`profit is ${profit} USD`);
 
-      const profit = gross - cost;
-      console.log(`profit is ${profit} USD`);
+        if (profit > 0) {
+          console.log(chalk.green("Arbitrage opportunity found!"));
+          console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
+          console.log(`Expected profit: ${profit} dai`);
 
-      if (profit > 0) {
-        console.log(chalk.green("Arbitrage opportunity found!"));
-        console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
-        console.log(`Expected profit: ${profit} dai`);
+          const options = {
+            gasPrice: await provider.getGasPrice(),
+            gasLimit: network.gas,
+          };
 
-        const options = {
-          gasPrice: await provider.getGasPrice(),
-          gasLimit: network.gas,
-        };
+          const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
+          const recipt = await tx.wait();
+          console.log(`Transaction hash: ${recipt.transactionHash}`);
 
-        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
-        const recipt = await tx.wait();
-        console.log(`Transaction hash: ${recipt.transactionHash}`);
-
-        saveFlashloanEventLog(flashloan, block);
+          saveFlashloanEventLog(flashloan, block);
+        }
       }
-    }
-  });
+    })
+    .on("error", async () => {});
 };
 
 const updateEtherPrice = async () => {
