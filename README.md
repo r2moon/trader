@@ -9,19 +9,19 @@ npm start
 ## Docker build
 
 ```bash
-npm docker:build
+npm run docker:build
 ```
 
 then
 
 ```bash
-npm docker:run
+npm run docker:run
 ```
 
 ## Test
 
 ```bash
-npm test
+npm run test
 ```
 
 ## Mainnet Tx hash
