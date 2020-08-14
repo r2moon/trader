@@ -52,91 +52,73 @@ const main = async () => {
   updateEtherPrice();
 
   // https://docs.ethers.io/v5/api/providers/provider/
-  provider
-    .on("block", async (block) => {
-      console.log(`New block received. Block number: ${block}`);
+  provider.on("block", async (block) => {
+    console.log(`New block received. Block number: ${block}`);
 
-      const amount_dai = amount_eth * ethPrice;
-      const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
+    const amount_dai = amount_eth * ethPrice;
+    const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
 
-      // fetch kyber buy / sell rates
-      const kyberRates = await Price.FetchKyberRates();
-      console.log(chalk.green("Kyber ETH/DAI"));
-      console.log(kyberRates);
+    // fetch kyber buy / sell rates
+    const kyberRates = await Price.FetchKyberRates();
+    console.log(chalk.green("Kyber ETH/DAI"));
+    console.log(kyberRates);
 
-      const uniswapRates = await Price.FetchUniswapRates(ethPrice);
-      console.log(chalk.blue("Uniswap ETH/DAI"));
-      console.log(uniswapRates);
+    const uniswapRates = await Price.FetchUniswapRates(ethPrice);
+    console.log(chalk.blue("Uniswap ETH/DAI"));
+    console.log(uniswapRates);
 
-      if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
-        const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
-        const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
+    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
+      const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
+      const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
 
-        const [gasPrice, gasLimit] = await Promise.all([
-          // avg gas price + 10Gwei set in config.json
-          (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
-          // set gaslimit to 1200000 based on this tx
-          // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
-          txcost_gas_limit,
-        ]);
+      const [gasPrice, gasLimit] = await Promise.all([
+        // avg gas price + 10Gwei set in config.json
+        (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
+        // set gaslimit to 1200000 based on this tx
+        // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
+        txcost_gas_limit,
+      ]);
 
-        console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
+      console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
 
-        const txCost = gasPrice.mul(gasLimit);
-        console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)`);
+      const txCost = gasPrice.mul(gasLimit);
+      console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)`);
 
-        const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
-        const gross = amount_eth * unitGross;
-        console.log(`gross is ${gross} USD`);
+      const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
+      const gross = amount_eth * unitGross;
+      console.log(`gross is ${gross} USD`);
 
-        // let uniswapServiceFee: number, kyberServiceFee: number;
-        // if (direction == Direction.KYBER_TO_UNISWAP) {
-        //   // dai to eth in kyber. fee = dai amount * 0.2% DAI
-        //   kyberServiceFee = amount_dai * kyber_service_fee;
-        //   // eth to dai in uniswap. fee = eth_amount * 0.3% ETH
-        //   uniswapServiceFee = amount_eth * uniswap_service_fee;
-        //   // convert uniswap service fee from eth to dai
-        //   uniswapServiceFee = uniswapServiceFee * ethPrice;
-        // } else {
-        //   // dai to eth in uniswap. fee = dai amount * 0.3% DAI
-        //   uniswapServiceFee = amount_dai * uniswap_service_fee;
-        //   // eth to dai in kyber. fee = eth amount * 0.2% ETH
-        //   kyberServiceFee = amount_eth * kyber_service_fee;
-        //   // convert kyber service fee from eth to dai
-        //   kyberServiceFee = kyberServiceFee * ethPrice;
-        // }
-        // since amount_eth * ethPrice = amount_dai, so we simpify it
-        const kyberServiceFee = amount_dai * kyber_service_fee;
-        const uniswapServiceFee = amount_dai * uniswap_service_fee;
+      const kyberServiceFee = amount_dai * kyber_service_fee;
+      const uniswapServiceFee = amount_dai * uniswap_service_fee;
+      console.log(`kyber service fee is ${kyberServiceFee} USD`);
+      console.log(`uniswap service fee is ${uniswapServiceFee} USD`);
 
-        console.log(`kyber service fee is ${kyberServiceFee} USD`);
-        console.log(`uniswap service fee is ${uniswapServiceFee} USD`);
+      const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice + kyberServiceFee + uniswapServiceFee;
+      console.log(`cost is ${cost} USD`);
 
-        const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice + kyberServiceFee + uniswapServiceFee;
-        console.log(`cost is ${cost} USD`);
+      const profit = gross - cost;
+      console.log(`profit is ${profit} USD`);
 
-        const profit = gross - cost;
-        console.log(`profit is ${profit} USD`);
+      if (profit > 0) {
+        console.log(chalk.green("Arbitrage opportunity found!"));
+        console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
+        console.log(`Expected profit: ${profit} dai`);
 
-        if (profit > 0) {
-          console.log(chalk.green("Arbitrage opportunity found!"));
-          console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
-          console.log(`Expected profit: ${profit} dai`);
+        const options = {
+          gasPrice: await provider.getGasPrice(),
+          gasLimit: network.gas,
+        };
 
-          const options = {
-            gasPrice: await provider.getGasPrice(),
-            gasLimit: network.gas,
-          };
+        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
+        const recipt = await tx.wait();
+        const txHash = recipt.transactionHash;
+        console.log(`Transaction hash: ${txHash}`);
 
-          const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
-          const recipt = await tx.wait();
-          console.log(`Transaction hash: ${recipt.transactionHash}`);
-
-          saveFlashloanEventLog(flashloan, block);
-        }
+        saveTransactionHash(txHash);
+        saveFlashloanEventLog(flashloan, block);
       }
-    })
-    .on("error", async () => {});
+    }
+  });
 };
 
 const updateEtherPrice = async () => {
@@ -155,6 +137,17 @@ enum Direction {
   UNISWAP_TO_KYBER = 1,
 }
 
+const saveTransactionHash = async (txHash: string) => {
+  if (config.save_to_mongodb) {
+    saveToMongoDB(txHash, "txHash");
+    return;
+  }
+  // else save to local file
+  fs.appendFile("transactionHash.json", txHash + "\n", (err) => {
+    if (err) console.log(err);
+  });
+};
+
 // save event log to mongodb or local file
 const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
   const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
@@ -169,7 +162,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
     const logData = flashloan.interface.parseLog(log);
     const record = logData.args.toString();
     if (config.save_to_mongodb) {
-      saveToMongoDB(record);
+      saveToMongoDB(record, "profits");
       return;
     }
     // else save to local file
@@ -180,7 +173,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
 };
 
 // save data to mongodb atlas
-const saveToMongoDB = async (record: string) => {
+const saveToMongoDB = async (record: string, collection: string) => {
   // mongodb atlas
   const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/test?retryWrites=true&w=majority`;
   const mongoClient = await MongoClient.connect(connectString, {
@@ -189,7 +182,7 @@ const saveToMongoDB = async (record: string) => {
 
   console.log("Connected to Database");
   const db = mongoClient.db("flashloan");
-  const profits = db.collection("profits");
+  const profits = db.collection(collection);
   const result = await profits.insertOne(record).catch((err: Error) => console.error(err));
   console.log(result);
 };

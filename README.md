@@ -1,5 +1,29 @@
 # Flashloan
 
+## Spinup
+
+```bash
+npm start
+```
+
+## Docker build
+
+```bash
+npm docker:build
+```
+
+then
+
+```bash
+npm docker:run
+```
+
+## Test
+
+```bash
+npm test
+```
+
 ## Mainnet Tx hash
 
 `0x90d643335ea8987a3abdcb12b852c223d6b6c5322ec82e09a92aa4918deed4b7`
