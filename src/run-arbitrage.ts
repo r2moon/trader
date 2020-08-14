@@ -62,24 +62,26 @@ const main = async () => {
     if (kyberRates.buy < uniswapRates.sell) {
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
       const [gasPrice, gasLimit] = await Promise.all([
-        provider.getGasPrice(),
-        // todo: estimateGas throws `gas required exceeds allowance or always failing transaction` error
-        // flashloan.estimateGas.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, Direction.KYBER_TO_UNISWAP),
-        // hard code temporarily
-        network.gas,
+        // avg gas price + 10Gwei set in config.json
+        (await provider.getGasPrice()).add(config.txcost_gas_price_buff_in_wei),
+        // set gaslimit to 1200000 based on this tx
+        // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
+        config.txcost_gas_limit,
       ]);
 
+      console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
+
       const txCost = gasPrice.mul(gasLimit);
-      console.log(`txCost is ${txCost}`);
+      console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH`);
 
       const gross = amount_eth * (uniswapRates.sell - kyberRates.buy);
-      console.log(`gross is ${gross}`);
+      console.log(`gross is ${gross} USD`);
 
       const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
-      console.log(`cost is ${cost}`);
+      console.log(`cost is ${cost} USD`);
 
       const profit = gross - cost;
-      console.log(`profit is ${profit}`);
+      console.log(`profit is ${profit} USD`);
 
       if (profit > 0) {
         console.log(chalk.green("Arbitrage opportunity found!"));
@@ -96,19 +98,24 @@ const main = async () => {
       }
     } else if (uniswapRates.buy < kyberRates.sell) {
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
-      const [gasPrice, gasLimit] = await Promise.all([provider.getGasPrice(), network.gas]);
+      const [gasPrice, gasLimit] = await Promise.all([
+        (await provider.getGasPrice()).add(config.txcost_gas_price_buff_in_wei),
+        config.txcost_gas_limit,
+      ]);
+
+      console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
 
       const txCost = gasPrice.mul(gasLimit);
-      console.log(`txCost is ${txCost}`);
+      console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH`);
 
-      const gross = amount_eth * (kyberRates.sell - uniswapRates.buy);
-      console.log(`gross is ${gross}`);
+      const gross = amount_eth * (uniswapRates.sell - kyberRates.buy);
+      console.log(`gross is ${gross} USD`);
 
       const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice;
-      console.log(`cost is ${cost}`);
+      console.log(`cost is ${cost} USD`);
 
       const profit = gross - cost;
-      console.log(`profit is ${profit}`);
+      console.log(`profit is ${profit} USD`);
 
       if (profit > 0) {
         console.log(chalk.green("Arbitrage opportunity found!"));

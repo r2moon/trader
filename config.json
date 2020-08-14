@@ -1,5 +1,7 @@
 {
   "amount_eth": 1,
   "use_mainnet_fork": false,
-  "save_to_mongodb": true
+  "save_to_mongodb": true,
+  "txcost_gas_limit": 1200000,
+  "txcost_gas_price_buff_in_wei": 10000000000
 }
