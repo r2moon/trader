@@ -1,4 +1,3 @@
-require("dotenv").config();
 import fs from "fs";
 import chalk from "chalk";
 
@@ -16,13 +15,13 @@ import {Price} from "./price";
 import config from "../config.json";
 
 // read infura uri and private key from .env
-const infuraUri = process.env.INFURA_URI;
+const infuraUri = Util.Env.infuraUri;
 if (!infuraUri) {
   console.log(chalk.red("Must assign INFURA_URI"));
   process.exit();
 }
 
-const privKey = process.env.PRIVATE_KEY;
+const privKey = Util.Env.privKey;
 if (!privKey) {
   console.log(chalk.red("Must assign PRIVATE_KEY"));
   process.exit();
@@ -34,6 +33,9 @@ const wallet = new ethers.Wallet(privKey, provider);
 
 const amount_eth = Util.Config.amount_eth;
 const network = Util.Config.network;
+const txcost_gas_limit = Util.Config.txcost_gas_limit;
+const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
+
 const daiAddress = Util.Address.daiAddress;
 const ethAddress = Util.Address.ethAddress;
 const soloMarginAddress = Util.Address.soloMarginAddress;
@@ -65,10 +67,10 @@ const main = async () => {
 
       const [gasPrice, gasLimit] = await Promise.all([
         // avg gas price + 10Gwei set in config.json
-        (await provider.getGasPrice()).add(config.txcost_gas_price_buff_in_wei),
+        (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
         // set gaslimit to 1200000 based on this tx
         // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
-        config.txcost_gas_limit,
+        txcost_gas_limit,
       ]);
 
       console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
@@ -149,7 +151,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
 // save data to mongodb atlas
 const saveToMongoDB = async (record: string) => {
   // mongodb atlas
-  const connectString = `mongodb+srv://min:${process.env.MONGODB_PASSWORD}@cluster0-eosoe.mongodb.net/test?retryWrites=true&w=majority`;
+  const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/test?retryWrites=true&w=majority`;
   const mongoClient = await MongoClient.connect(connectString, {
     useUnifiedTopology: true,
   });
