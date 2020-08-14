@@ -50,6 +50,9 @@ const main = async () => {
 
   // https://docs.ethers.io/v5/api/providers/provider/
   provider.on("block", async (block) => {
+    // ignore failed to meet quorum error
+    if (block <= 0) return;
+
     console.log(`New block received. Block number: ${block}`);
     const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString());
     // fetch kyber buy / sell rates
