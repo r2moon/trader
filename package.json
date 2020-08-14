@@ -6,7 +6,7 @@
   "scripts": {
     "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
     "prepare": "tsc",
-    "start": "ts-node src/run-arbitrage.ts",
+    "start": "ts-node src/run-arbitrage.ts 2>>error.log",
     "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<infura project id>> --account='<<private key>>,1000000000000000000000'",
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
