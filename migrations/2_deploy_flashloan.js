@@ -1,6 +1,6 @@
 // Mainnet
 const Flashloan = artifacts.require("Flashloan.sol");
-const {mainnet: addresses} = require("../addresses");
+const {default: addresses} = require("../dest/addresses");
 
 module.exports = function (deployer, _network, [beneficiaryAddress, _]) {
   deployer.deploy(
@@ -17,7 +17,7 @@ module.exports = function (deployer, _network, [beneficiaryAddress, _]) {
 // const Flashloan = artifacts.require("TestableFlashloan.sol");
 // const VaultManager = artifacts.require("VaultManager.sol");
 // const DaiFaucet = artifacts.require("DaiFaucet.sol");
-// const {mainnet: addresses} = require("../addresses");
+// const {default: addresses} = require("../dest/addresses");
 
 // module.exports = async function (deployer, network, [beneficiaryAddress, _]) {
 //   await deployer.deploy(VaultManager);

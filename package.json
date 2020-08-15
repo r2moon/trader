@@ -12,6 +12,8 @@
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
     "deploy:mainnet": "truffle migrate --reset --network mainnet",
+    "deploy:testnet:dry-run": "truffle migrate --reset --network testnet --dry-run",
+    "deploy:mainnet:dry-run": "truffle migrate --reset --network mainnet --dry-run",
     "test": "jest --detectOpenHandles",
     "docker:build": "docker build -t flashloan .",
     "docker:run": "docker run -d flashloan"
