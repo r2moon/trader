@@ -43,17 +43,16 @@ const daiAddress = Util.Address.daiAddress;
 const ethAddress = Util.Address.ethAddress;
 const soloMarginAddress = Util.Address.soloMarginAddress;
 
-let ethPrice: number;
-
 const main = async () => {
   const networkId = network.network_id;
   console.log(`Network ID is ${networkId}`);
 
-  updateEtherPrice();
-
   // https://docs.ethers.io/v5/api/providers/provider/
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
+
+    const ethPrice = await updateEtherPrice();
+    console.log(chalk.magenta(`eth price is ${ethPrice}`));
 
     const amount_dai = amount_eth * ethPrice;
     const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
@@ -132,13 +131,8 @@ const main = async () => {
 
 const updateEtherPrice = async () => {
   const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-  const updateEthPrice = async () => {
-    const expectedRate = (await kyber.getExpectedRate(ethAddress, daiAddress, 1)).expectedRate;
-    ethPrice = parseFloat(ethers.utils.formatEther(expectedRate));
-    console.log(`eth price is ${ethPrice}`);
-  };
-  await updateEthPrice();
-  setInterval(updateEthPrice, 15000);
+  const expectedRate = (await kyber.getExpectedRate(ethAddress, daiAddress, 1)).expectedRate;
+  return parseFloat(ethers.utils.formatEther(expectedRate));
 };
 
 enum Direction {
