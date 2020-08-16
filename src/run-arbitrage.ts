@@ -104,6 +104,15 @@ const main = async () => {
         console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
         console.log(`Expected profit: ${profit} dai`);
 
+        const record = `Time: ${new Date().toISOString()}, Direction: ${
+          direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"
+        }, profit: ${profit}\n`;
+
+        // save arbs to local file
+        fs.appendFile("arbs.json", record, (err) => {
+          if (err) console.log(err);
+        });
+
         const options = {
           gasPrice: await provider.getGasPrice(),
           gasLimit: network.gas,
