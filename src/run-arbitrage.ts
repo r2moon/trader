@@ -38,6 +38,7 @@ const txcost_gas_limit = Util.Config.txcost_gas_limit;
 const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
 const kyber_service_fee = Util.Config.kyber_service_fee;
 const uniswap_service_fee = Util.Config.uniswap_service_fee;
+const profit_threshold = Util.Config.profit_threshold;
 
 const daiAddress = Util.Address.daiAddress;
 const ethAddress = Util.Address.ethAddress;
@@ -98,7 +99,7 @@ const main = async () => {
       const profit = gross - cost;
       console.log(`profit is ${profit} USD`);
 
-      if (profit > 0) {
+      if (profit >= profit_threshold) {
         console.log(chalk.green("Arbitrage opportunity found!"));
         console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
         console.log(`Expected profit: ${profit} dai`);

@@ -45,7 +45,7 @@ export class Price {
   // private function to fetch kyber buy / sell rate
   private static fetchKyberPriceByAction = async (type: Action): Promise<number> => {
     const fetch = isNode ? nodeFetch : window.fetch;
-    const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${amount_eth}&type=${type}&platformFee=8`;
+    const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${amount_eth}&type=${type}&platformFee=0`;
     const response = await fetch(endpoint);
     const result = await response.json();
     return result.data / amount_eth;

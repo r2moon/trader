@@ -12,6 +12,7 @@ export class Util {
     static txcost_gas_limit = config.txcost_gas_limit;
     static kyber_service_fee = config.kyber_service_fee;
     static uniswap_service_fee = config.uniswap_service_fee;
+    static profit_threshold = config.profit_threshold;
   };
 
   static Env = class {
