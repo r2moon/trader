@@ -108,7 +108,7 @@ const main = async () => {
         }, profit: ${profit}\n`;
 
         // save arbs to local file
-        fs.appendFile("arbs.json", record, (err) => {
+        fs.appendFile("arbs.log", record, (err) => {
           if (err) console.log(err);
         });
 
@@ -146,7 +146,7 @@ const saveTransactionHash = async (txHash: string) => {
     return;
   }
   // else save to local file
-  fs.appendFile("transactionHash.json", txHash + "\n", (err) => {
+  fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
     if (err) console.log(err);
   });
 };
@@ -169,7 +169,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
       return;
     }
     // else save to local file
-    fs.appendFile("transaction.json", record, (err) => {
+    fs.appendFile("transaction.log", record, (err) => {
       if (err) console.log(err);
     });
   });
