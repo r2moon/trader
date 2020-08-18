@@ -39,10 +39,13 @@ const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
 const kyber_service_fee = Util.Config.kyber_service_fee;
 const uniswap_service_fee = Util.Config.uniswap_service_fee;
 const profit_threshold = Util.Config.profit_threshold;
-
 const daiAddress = Util.Address.daiAddress;
 const ethAddress = Util.Address.ethAddress;
 const soloMarginAddress = Util.Address.soloMarginAddress;
+
+// define how many blocks to wait after an arb is identified and a trade is made
+const wait_blocks = Util.Config.wait_blocks;
+let wait_blocks_arr: Array<number> = [];
 
 const main = async () => {
   const networkId = network.network_id;
@@ -51,6 +54,13 @@ const main = async () => {
   // https://docs.ethers.io/v5/api/providers/provider/
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
+
+    // skip block if an arb was just identified
+    if (wait_blocks_arr.includes(block)) {
+      wait_blocks_arr = wait_blocks_arr.filter((i) => i != block);
+      console.log(`Skip block: ${block}`);
+      return;
+    }
 
     const ethPrice = await updateEtherPrice();
     console.log(chalk.magenta(`eth price is ${ethPrice}`));
@@ -100,6 +110,11 @@ const main = async () => {
       console.log(`profit is ${profit} USD`);
 
       if (profit >= profit_threshold) {
+        if (!wait_blocks_arr.length) {
+          // wait 10 blocks (start from next block)
+          wait_blocks_arr = Array.from(Array(wait_blocks), (_, i) => i + block + 1);
+        }
+
         console.log(chalk.green("Arbitrage opportunity found!"));
         console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
         console.log(`Expected profit: ${profit} dai`);

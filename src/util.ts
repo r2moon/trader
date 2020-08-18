@@ -13,6 +13,7 @@ export class Util {
     static kyber_service_fee = config.kyber_service_fee;
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
+    static wait_blocks = config.wait_blocks;
   };
 
   static Env = class {
