@@ -150,8 +150,8 @@ export enum Direction {
 const saveTransactionHash = async (txHash: string) => {
   if (config.save_to_mongodb) {
     saveToMongoDB(txHash, "txHash");
-    return;
   }
+
   // else save to local file
   fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
     if (err) console.log(err);
@@ -173,8 +173,8 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
     const record = logData.args.toString();
     if (config.save_to_mongodb) {
       saveToMongoDB(record, "profits");
-      return;
     }
+
     // else save to local file
     fs.appendFile("transaction.log", record, (err) => {
       if (err) console.log(err);
