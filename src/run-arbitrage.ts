@@ -1,8 +1,6 @@
 import fs from "fs";
 import chalk from "chalk";
 
-import addresses from "../addresses";
-import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import {ethers} from "ethers";
 
 import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
@@ -40,7 +38,6 @@ const kyber_service_fee = Util.Config.kyber_service_fee;
 const uniswap_service_fee = Util.Config.uniswap_service_fee;
 const profit_threshold = Util.Config.profit_threshold;
 const daiAddress = Util.Address.daiAddress;
-const ethAddress = Util.Address.ethAddress;
 const soloMarginAddress = Util.Address.soloMarginAddress;
 
 // define how many blocks to wait after an arb is identified and a trade is made
@@ -62,7 +59,7 @@ const main = async () => {
       return;
     }
 
-    const ethPrice = await updateEtherPrice();
+    const ethPrice = await Price.getEtherPrice(provider);
     console.log(chalk.magenta(`eth price is ${ethPrice}`));
 
     const amount_dai = amount_eth * ethPrice;
@@ -145,13 +142,7 @@ const main = async () => {
   });
 };
 
-const updateEtherPrice = async () => {
-  const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-  const expectedRate = (await kyber.getExpectedRate(ethAddress, daiAddress, 1)).expectedRate;
-  return parseFloat(ethers.utils.formatEther(expectedRate));
-};
-
-enum Direction {
+export enum Direction {
   KYBER_TO_UNISWAP = 0,
   UNISWAP_TO_KYBER = 1,
 }
