@@ -1,6 +1,5 @@
 import {Price, Action} from "./price";
 import {ethers} from "ethers";
-import {Util} from "./util";
 
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const csvWriter = createCsvWriter({
@@ -21,7 +20,6 @@ const csvWriter = createCsvWriter({
 const min = 1;
 const max = 100;
 const records: Record[] = [];
-const infuraUri = Util.Env.infuraUri;
 
 const main = async () => {
   const provider = new ethers.providers.InfuraProvider("mainnet");
@@ -30,29 +28,35 @@ const main = async () => {
   for (let amount_eth = min; amount_eth <= amounts.length; amount_eth++) {
     console.log(`using amount ${amount_eth}`);
     const now = new Date().toISOString();
-    const [kyberBuy, kyberSell] = await Promise.all([
-      Price.fetchKyberPriceByAction(Action.Buy, amount_eth),
-      Price.fetchKyberPriceByAction(Action.Sell, amount_eth),
-    ]);
 
-    const ethPrice = await Price.getEtherPrice(provider);
-    const price = await Price.FetchUniswapRates(ethPrice, amount_eth);
-    const [uniswapBuy, uniswapSell] = [price.buy, price.sell];
+    try {
+      const [kyberBuy, kyberSell] = await Promise.all([
+        Price.fetchKyberPriceByAction(Action.Buy, amount_eth),
+        Price.fetchKyberPriceByAction(Action.Sell, amount_eth),
+      ]);
 
-    const kyberToUniswap = kyberBuy - uniswapSell;
-    const uniswapToKyber = uniswapBuy - kyberSell;
+      const ethPrice = await Price.getEtherPrice(provider);
+      const price = await Price.FetchUniswapRates(ethPrice, amount_eth);
+      const [uniswapBuy, uniswapSell] = [price.buy, price.sell];
 
-    records.push({
-      amount: amount_eth,
-      ethPrice: ethPrice.toFixed(2),
-      kyberBuy: kyberBuy.toFixed(2),
-      kyberSell: kyberSell.toFixed(2),
-      uniswapBuy: uniswapBuy.toFixed(2),
-      uniswapSell: uniswapSell.toFixed(2),
-      kyberToUniswap: kyberToUniswap.toFixed(2),
-      uniswapToKyber: uniswapToKyber.toFixed(2),
-      time: now,
-    });
+      const kyberToUniswap = kyberBuy - uniswapSell;
+      const uniswapToKyber = uniswapBuy - kyberSell;
+
+      records.push({
+        amount: amount_eth,
+        ethPrice: ethPrice.toFixed(2),
+        kyberBuy: kyberBuy.toFixed(2),
+        kyberSell: kyberSell.toFixed(2),
+        uniswapBuy: uniswapBuy.toFixed(2),
+        uniswapSell: uniswapSell.toFixed(2),
+        kyberToUniswap: kyberToUniswap.toFixed(2),
+        uniswapToKyber: uniswapToKyber.toFixed(2),
+        time: now,
+      });
+    } catch (e) {
+      // retry this loop. usually the error is caused by `failed to meet quorum`
+      amount_eth--;
+    }
 
     await sleep(1000);
   }
