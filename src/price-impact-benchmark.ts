@@ -19,15 +19,16 @@ const csvWriter = createCsvWriter({
 });
 
 const min = 1;
-const max = 3;
+const max = 100;
 const records: Record[] = [];
 const infuraUri = Util.Env.infuraUri;
 
 const main = async () => {
-  const provider = new ethers.providers.WebSocketProvider(infuraUri);
+  const provider = new ethers.providers.InfuraProvider("mainnet");
   const amounts = Array.from(Array(max - min + 1), (_, i) => i + 1);
 
   for (let amount_eth = min; amount_eth <= amounts.length; amount_eth++) {
+    console.log(`using amount ${amount_eth}`);
     const now = new Date().toISOString();
     const [kyberBuy, kyberSell] = await Promise.all([
       Price.fetchKyberPriceByAction(Action.Buy, amount_eth),
