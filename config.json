@@ -2,7 +2,7 @@
   "amount_eth": 100,
   "use_mainnet_fork": false,
   "save_to_mongodb": true,
-  "txcost_gas_limit": 1200000,
+  "txcost_gas_limit": 2000000,
   "txcost_gas_price_buff_in_wei": 10000000000,
   "kyber_service_fee": 0.002,
   "uniswap_service_fee": 0.003,

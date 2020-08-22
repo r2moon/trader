@@ -77,10 +77,11 @@ const main = async () => {
     if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
       const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
+      const avgGasPrice = await provider.getGasPrice();
 
       const [gasPrice, gasLimit] = await Promise.all([
         // avg gas price + 10Gwei set in config.json
-        (await provider.getGasPrice()).add(txcost_gas_price_buff_in_wei),
+        avgGasPrice.add(txcost_gas_price_buff_in_wei),
         // set gaslimit to 1200000 based on this tx
         // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
         txcost_gas_limit,
@@ -126,8 +127,8 @@ const main = async () => {
         });
 
         const options = {
-          gasPrice: await provider.getGasPrice(),
-          gasLimit: network.gas,
+          gasPrice: avgGasPrice,
+          gasLimit: txcost_gas_limit,
         };
 
         const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
@@ -149,7 +150,7 @@ export enum Direction {
 
 const saveTransactionHash = async (txHash: string) => {
   if (config.save_to_mongodb) {
-    saveToMongoDB(txHash, "txHash");
+    saveToMongoDB({tx: txHash}, "txHash");
   }
 
   // else save to local file
@@ -172,7 +173,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
     const logData = flashloan.interface.parseLog(log);
     const record = logData.args.toString();
     if (config.save_to_mongodb) {
-      saveToMongoDB(record, "profits");
+      saveToMongoDB({log: record}, "profits");
     }
 
     // else save to local file
@@ -183,9 +184,9 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
 };
 
 // save data to mongodb atlas
-const saveToMongoDB = async (record: string, collection: string) => {
+const saveToMongoDB = async (record: Object, collection: string) => {
   // mongodb atlas
-  const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/test?retryWrites=true&w=majority`;
+  const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
   const mongoClient = await MongoClient.connect(connectString, {
     useUnifiedTopology: true,
   });
