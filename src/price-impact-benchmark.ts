@@ -39,8 +39,8 @@ const main = async () => {
       const price = await Price.FetchUniswapRates(ethPrice, amount_eth);
       const [uniswapBuy, uniswapSell] = [price.buy, price.sell];
 
-      const kyberToUniswap = kyberBuy - uniswapSell;
-      const uniswapToKyber = uniswapBuy - kyberSell;
+      const kyberToUniswap = uniswapSell - kyberBuy;
+      const uniswapToKyber = kyberSell - uniswapBuy;
 
       records.push({
         amount: amount_eth,

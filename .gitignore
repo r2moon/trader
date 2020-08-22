@@ -3,3 +3,4 @@ node_modules
 dest
 
 error.log
+price.csv
