@@ -217,7 +217,7 @@ const mongoClient = (() => {
   let instance: MongoClient;
   const createInstance = async () => {
     console.log("Connecting to Database");
-    const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
+    const connectString = `mongodb+srv://flashloan:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
     return await MongoClient.connect(connectString, {
       useUnifiedTopology: true,
     });
