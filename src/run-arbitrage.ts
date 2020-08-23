@@ -74,6 +74,8 @@ const main = async () => {
     console.log(chalk.blue("Uniswap ETH/DAI"));
     console.log(uniswapRates);
 
+    saveBlockInfo(block, kyberRates, uniswapRates);
+
     if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
       const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
@@ -148,6 +150,25 @@ export enum Direction {
   UNISWAP_TO_KYBER = 1,
 }
 
+const saveBlockInfo = async (block: number, kyberPrice: Price, uniwapPrice: Price) => {
+  const blockInfo = {
+    block,
+    kyberBuy: kyberPrice.buy,
+    kyberSell: kyberPrice.sell,
+    uniswapBuy: uniwapPrice.buy,
+    uniswapSell: uniwapPrice.sell,
+  };
+
+  if (config.save_to_mongodb) {
+    saveToMongoDB(blockInfo, "blockInfo");
+  } else {
+    // else save to local file
+    fs.appendFile("blockInfo.log", JSON.stringify(blockInfo) + "\n", (err) => {
+      if (err) console.log(err);
+    });
+  }
+};
+
 const saveTransactionHash = async (txHash: string) => {
   if (config.save_to_mongodb) {
     saveToMongoDB({tx: txHash}, "txHash");
@@ -185,18 +206,32 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
 
 // save data to mongodb atlas
 const saveToMongoDB = async (record: Object, collection: string) => {
-  // mongodb atlas
-  const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
-  const mongoClient = await MongoClient.connect(connectString, {
-    useUnifiedTopology: true,
-  });
-
-  console.log("Connected to Database");
-  const db = mongoClient.db("flashloan");
+  // console.log("Connected to Database");
+  const db = (await mongoClient.getInstance()).db("flashloan");
   const profits = db.collection(collection);
-  const result = await profits.insertOne(record).catch((err: Error) => console.error(err));
-  console.log(result);
+  await profits.insertOne(record).catch((err: Error) => console.error(err));
+  // console.log(result);
 };
+
+const mongoClient = (() => {
+  let instance: MongoClient;
+  const createInstance = async () => {
+    console.log("Connecting to Database");
+    const connectString = `mongodb+srv://min:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
+    return await MongoClient.connect(connectString, {
+      useUnifiedTopology: true,
+    });
+  };
+
+  return {
+    getInstance: async () => {
+      if (!instance) {
+        instance = await createInstance();
+      }
+      return instance;
+    },
+  };
+})();
 
 // main logic
 main();
