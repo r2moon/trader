@@ -76,7 +76,7 @@ const main = async () => {
 
     saveBlockInfo(block, kyberRates, uniswapRates);
 
-    if (/*kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell*/ true) {
+    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
       const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
       const avgGasPrice = await provider.getGasPrice();
