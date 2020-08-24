@@ -76,7 +76,7 @@ const main = async () => {
 
     saveBlockInfo(block, kyberRates, uniswapRates);
 
-    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
+    if (/*kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell*/ true) {
       const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
       const avgGasPrice = await provider.getGasPrice();
@@ -113,6 +113,16 @@ const main = async () => {
         if (!wait_blocks_arr.length) {
           // wait 10 blocks (start from next block)
           wait_blocks_arr = Array.from(Array(wait_blocks), (_, i) => i + block + 1);
+        }
+
+        const balance = await provider.getBalance(wallet.address);
+        console.log(`wallet balance is ${ethers.utils.formatEther(balance)} ETH`);
+
+        // check wallet balance. Skip if not enough balance
+        const insufficientBalance = balance.lte(txCost); // balance less than txCost
+        if (insufficientBalance) {
+          console.log(`Insufficient balance. Skip`);
+          return;
         }
 
         console.log(chalk.green("Arbitrage opportunity found!"));
