@@ -52,13 +52,6 @@ const main = async () => {
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
 
-    // skip block if an arb was just identified
-    if (wait_blocks_arr.includes(block)) {
-      wait_blocks_arr = wait_blocks_arr.filter((i) => i != block);
-      console.log(`Skip block: ${block}`);
-      return;
-    }
-
     const ethPrice = await Price.getEtherPrice(provider);
     console.log(chalk.magenta(`eth price is ${ethPrice}`));
 
@@ -75,6 +68,13 @@ const main = async () => {
     console.log(uniswapRates);
 
     saveBlockInfo(block, kyberRates, uniswapRates);
+
+    // skip block if an arb was just identified
+    if (wait_blocks_arr.includes(block)) {
+      wait_blocks_arr = wait_blocks_arr.filter((i) => i != block);
+      console.log(`Skip block: ${block}`);
+      return;
+    }
 
     if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
       const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
@@ -143,13 +143,18 @@ const main = async () => {
           gasLimit: txcost_gas_limit,
         };
 
-        const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
-        const recipt = await tx.wait();
-        const txHash = recipt.transactionHash;
-        console.log(`Transaction hash: ${txHash}`);
+        try {
+          const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
+          const recipt = await tx.wait();
+          const txHash = recipt.transactionHash;
+          console.log(`Transaction hash: ${txHash}`);
 
-        saveTransactionHash(txHash);
-        saveFlashloanEventLog(flashloan, block);
+          saveTransactionHash(txHash);
+          saveFlashloanEventLog(flashloan, block);
+        } catch (e) {
+          console.log(`tx error!`);
+          console.log(e);
+        }
       }
     }
   });
