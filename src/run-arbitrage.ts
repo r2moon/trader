@@ -129,7 +129,7 @@ const main = async () => {
         console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
         console.log(`Expected profit: ${profit} dai`);
 
-        const record = `Time: ${new Date().toISOString()}, Direction: ${
+        const record = `Time: ${new Date().toISOString()}, Block: ${block}, Direction: ${
           direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"
         }, profit: ${profit}\n`;
 
