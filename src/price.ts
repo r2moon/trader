@@ -40,7 +40,7 @@ export class Price {
   };
 
   // fetch kyber buy / sell rate
-  static FetchKyberRates = async (amount_eth = Util.Config.amount_eth): Promise<Price> => {
+  static FetchKyberRates1 = async (amount_eth = Util.Config.amount_eth): Promise<Price> => {
     const [buy, sell] = await Promise.all([
       Price.fetchKyberPriceByAction(Action.Buy, amount_eth),
       Price.fetchKyberPriceByAction(Action.Sell, amount_eth),
@@ -48,10 +48,38 @@ export class Price {
     return new Price(buy, sell);
   };
 
+  static FetchKyberRates2 = async (amount_eth = Util.Config.amount_eth): Promise<Price> => {
+    const [buy, sell] = await Promise.all([
+      Price.fetchKyberPriceByAction(Action.Buy, amount_eth, 8),
+      Price.fetchKyberPriceByAction(Action.Sell, amount_eth, 8),
+    ]);
+    return new Price(buy, sell);
+  };
+
+  static FetchKyberRates3 = async (
+    provider: ethers.providers.Provider,
+    ethPrice: number,
+    amount_eth = Util.Config.amount_eth
+  ): Promise<Price> => {
+    const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
+    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString()).toString();
+    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString()).toString();
+
+    const kyberResults = await Promise.all([
+      kyber.getExpectedRate(daiAddress, ethAddress, amount_dai_wei),
+      kyber.getExpectedRate(ethAddress, daiAddress, amount_eth_wei),
+    ]);
+
+    return new Price(
+      1 / parseFloat(ethers.utils.formatEther(kyberResults[0].expectedRate)),
+      parseFloat(ethers.utils.formatEther(kyberResults[1].expectedRate))
+    );
+  };
+
   // private function to fetch kyber buy / sell rate
-  static fetchKyberPriceByAction = async (type: Action, amount_eth: number): Promise<number> => {
+  static fetchKyberPriceByAction = async (type: Action, amount_eth: number, platformFee = 0): Promise<number> => {
     const fetch = isNode ? nodeFetch : window.fetch;
-    const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${amount_eth}&type=${type}&platformFee=0`;
+    const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${amount_eth}&type=${type}&platformFee=${platformFee}`;
     const response = await fetch(endpoint);
     const result = await response.json();
     return result.data / amount_eth;

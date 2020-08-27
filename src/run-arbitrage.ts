@@ -59,15 +59,23 @@ const main = async () => {
     const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
 
     // fetch kyber buy / sell rates
-    const kyberRates = await Price.FetchKyberRates();
-    console.log(chalk.green("Kyber ETH/DAI"));
+    const kyberRates = await Price.FetchKyberRates1();
+    const kyberRates2 = await Price.FetchKyberRates2();
+    const kyberRates3 = await Price.FetchKyberRates3(provider, ethPrice);
+    console.log(chalk.green("Kyber ETH/DAI - Platform fee 0"));
     console.log(kyberRates);
+
+    console.log(chalk.green("Kyber ETH/DAI - Platform fee 8"));
+    console.log(kyberRates2);
+
+    console.log(chalk.green("Kyber ETH/DAI - expected rate"));
+    console.log(kyberRates3);
 
     const uniswapRates = await Price.FetchUniswapRates(ethPrice);
     console.log(chalk.blue("Uniswap ETH/DAI"));
     console.log(uniswapRates);
 
-    saveBlockInfo(block, kyberRates, uniswapRates);
+    saveBlockInfo(block, kyberRates, kyberRates2, kyberRates3, uniswapRates);
 
     // skip block if an arb was just identified
     if (wait_blocks_arr.includes(block)) {
@@ -165,11 +173,15 @@ export enum Direction {
   UNISWAP_TO_KYBER = 1,
 }
 
-const saveBlockInfo = async (block: number, kyberPrice: Price, uniwapPrice: Price) => {
+const saveBlockInfo = async (block: number, kyberPrice1: Price, kyberPrice2: Price, kyberPrice3: Price, uniwapPrice: Price) => {
   const blockInfo = {
     block,
-    kyberBuy: kyberPrice.buy,
-    kyberSell: kyberPrice.sell,
+    kyberBuyFee0: kyberPrice1.buy,
+    kyberSellFee0: kyberPrice1.sell,
+    kyberBuyFee8: kyberPrice2.buy,
+    kyberSellFee8: kyberPrice2.sell,
+    kyberBuyExpectedRate: kyberPrice3.buy,
+    kyberSellExpectedRate: kyberPrice3.sell,
     uniswapBuy: uniwapPrice.buy,
     uniswapSell: uniwapPrice.sell,
   };
