@@ -3,14 +3,7 @@ const Flashloan = artifacts.require("Flashloan.sol");
 const {default: addresses} = require("../dest/addresses");
 
 module.exports = function (deployer, _network, [beneficiaryAddress, _]) {
-  deployer.deploy(
-    Flashloan,
-    addresses.kyber.kyberNetworkProxy,
-    addresses.uniswap.router,
-    addresses.tokens.weth,
-    addresses.tokens.dai,
-    beneficiaryAddress
-  );
+  deployer.deploy(Flashloan, addresses.kyber.kyberNetworkProxy, addresses.uniswap.router, addresses.tokens.weth, beneficiaryAddress);
 };
 
 // //// For Test

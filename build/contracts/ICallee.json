@@ -50,14 +50,14 @@
     "absolutePath": "@studydefi/money-legos/dydx/contracts/ICallee.sol",
     "exportedSymbols": {
       "ICallee": [
-        1517
+        2521
       ]
     },
-    "id": 1518,
+    "id": 2522,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 1504,
+        "id": 2508,
         "literals": [
           "solidity",
           "^",
@@ -65,28 +65,28 @@
           ".7"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:23:10"
+        "src": "0:23:12"
       },
       {
-        "id": 1505,
+        "id": 2509,
         "literals": [
           "experimental",
           "ABIEncoderV2"
         ],
         "nodeType": "PragmaDirective",
-        "src": "24:33:10"
+        "src": "24:33:12"
       },
       {
         "absolutePath": "@studydefi/money-legos/dydx/contracts/ISoloMargin.sol",
         "file": "./ISoloMargin.sol",
-        "id": 1507,
+        "id": 2511,
         "nodeType": "ImportDirective",
-        "scope": 1518,
-        "sourceUnit": 2144,
-        "src": "59:44:10",
+        "scope": 2522,
+        "sourceUnit": 3148,
+        "src": "59:44:12",
         "symbolAliases": [
           {
-            "foreign": 1506,
+            "foreign": 2510,
             "local": null
           }
         ],
@@ -98,9 +98,9 @@
         "contractKind": "contract",
         "documentation": "@title ICallee\n@author dYdX\n * Interface that Callees for Solo must implement in order to ingest data.",
         "fullyImplemented": false,
-        "id": 1517,
+        "id": 2521,
         "linearizedBaseContracts": [
-          1517
+          2521
         ],
         "name": "ICallee",
         "nodeType": "ContractDefinition",
@@ -108,23 +108,23 @@
           {
             "body": null,
             "documentation": "Allows users to send this contract arbitrary data.\n     * @param  sender       The msg.sender to Solo\n@param  accountInfo  The account from which the data is being sent\n@param  data         Arbitrary data given by the sender",
-            "id": 1516,
+            "id": 2520,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "callFunction",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1514,
+              "id": 2518,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1509,
+                  "id": 2513,
                   "name": "sender",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "601:14:10",
+                  "scope": 2520,
+                  "src": "601:14:12",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -132,10 +132,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 1508,
+                    "id": 2512,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "601:7:10",
+                    "src": "601:7:12",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -147,26 +147,26 @@
                 },
                 {
                   "constant": false,
-                  "id": 1511,
+                  "id": 2515,
                   "name": "accountInfo",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "625:31:10",
+                  "scope": 2520,
+                  "src": "625:31:12",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Info_$1529_memory_ptr",
+                    "typeIdentifier": "t_struct$_Info_$2533_memory_ptr",
                     "typeString": "struct Account.Info"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 1510,
+                    "id": 2514,
                     "name": "Account.Info",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 1529,
-                    "src": "625:12:10",
+                    "referencedDeclaration": 2533,
+                    "src": "625:12:12",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Info_$1529_storage_ptr",
+                      "typeIdentifier": "t_struct$_Info_$2533_storage_ptr",
                       "typeString": "struct Account.Info"
                     }
                   },
@@ -175,11 +175,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 1513,
+                  "id": 2517,
                   "name": "data",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "666:17:10",
+                  "scope": 2520,
+                  "src": "666:17:12",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -187,10 +187,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 1512,
+                    "id": 2516,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "666:5:10",
+                    "src": "666:5:12",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -200,39 +200,39 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "591:98:10"
+              "src": "591:98:12"
             },
             "returnParameters": {
-              "id": 1515,
+              "id": 2519,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "704:0:10"
+              "src": "704:0:12"
             },
-            "scope": 1517,
-            "src": "570:135:10",
+            "scope": 2521,
+            "src": "570:135:12",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 1518,
-        "src": "226:481:10"
+        "scope": 2522,
+        "src": "226:481:12"
       }
     ],
-    "src": "0:707:10"
+    "src": "0:707:12"
   },
   "legacyAST": {
     "absolutePath": "@studydefi/money-legos/dydx/contracts/ICallee.sol",
     "exportedSymbols": {
       "ICallee": [
-        1517
+        2521
       ]
     },
-    "id": 1518,
+    "id": 2522,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 1504,
+        "id": 2508,
         "literals": [
           "solidity",
           "^",
@@ -240,28 +240,28 @@
           ".7"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:23:10"
+        "src": "0:23:12"
       },
       {
-        "id": 1505,
+        "id": 2509,
         "literals": [
           "experimental",
           "ABIEncoderV2"
         ],
         "nodeType": "PragmaDirective",
-        "src": "24:33:10"
+        "src": "24:33:12"
       },
       {
         "absolutePath": "@studydefi/money-legos/dydx/contracts/ISoloMargin.sol",
         "file": "./ISoloMargin.sol",
-        "id": 1507,
+        "id": 2511,
         "nodeType": "ImportDirective",
-        "scope": 1518,
-        "sourceUnit": 2144,
-        "src": "59:44:10",
+        "scope": 2522,
+        "sourceUnit": 3148,
+        "src": "59:44:12",
         "symbolAliases": [
           {
-            "foreign": 1506,
+            "foreign": 2510,
             "local": null
           }
         ],
@@ -273,9 +273,9 @@
         "contractKind": "contract",
         "documentation": "@title ICallee\n@author dYdX\n * Interface that Callees for Solo must implement in order to ingest data.",
         "fullyImplemented": false,
-        "id": 1517,
+        "id": 2521,
         "linearizedBaseContracts": [
-          1517
+          2521
         ],
         "name": "ICallee",
         "nodeType": "ContractDefinition",
@@ -283,23 +283,23 @@
           {
             "body": null,
             "documentation": "Allows users to send this contract arbitrary data.\n     * @param  sender       The msg.sender to Solo\n@param  accountInfo  The account from which the data is being sent\n@param  data         Arbitrary data given by the sender",
-            "id": 1516,
+            "id": 2520,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "callFunction",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1514,
+              "id": 2518,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1509,
+                  "id": 2513,
                   "name": "sender",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "601:14:10",
+                  "scope": 2520,
+                  "src": "601:14:12",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -307,10 +307,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 1508,
+                    "id": 2512,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "601:7:10",
+                    "src": "601:7:12",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -322,26 +322,26 @@
                 },
                 {
                   "constant": false,
-                  "id": 1511,
+                  "id": 2515,
                   "name": "accountInfo",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "625:31:10",
+                  "scope": 2520,
+                  "src": "625:31:12",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Info_$1529_memory_ptr",
+                    "typeIdentifier": "t_struct$_Info_$2533_memory_ptr",
                     "typeString": "struct Account.Info"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 1510,
+                    "id": 2514,
                     "name": "Account.Info",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 1529,
-                    "src": "625:12:10",
+                    "referencedDeclaration": 2533,
+                    "src": "625:12:12",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Info_$1529_storage_ptr",
+                      "typeIdentifier": "t_struct$_Info_$2533_storage_ptr",
                       "typeString": "struct Account.Info"
                     }
                   },
@@ -350,11 +350,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 1513,
+                  "id": 2517,
                   "name": "data",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1516,
-                  "src": "666:17:10",
+                  "scope": 2520,
+                  "src": "666:17:12",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -362,10 +362,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 1512,
+                    "id": 2516,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "666:5:10",
+                    "src": "666:5:12",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -375,26 +375,26 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "591:98:10"
+              "src": "591:98:12"
             },
             "returnParameters": {
-              "id": 1515,
+              "id": 2519,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "704:0:10"
+              "src": "704:0:12"
             },
-            "scope": 1517,
-            "src": "570:135:10",
+            "scope": 2521,
+            "src": "570:135:12",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 1518,
-        "src": "226:481:10"
+        "scope": 2522,
+        "src": "226:481:12"
       }
     ],
-    "src": "0:707:10"
+    "src": "0:707:12"
   },
   "compiler": {
     "name": "solc",
@@ -402,7 +402,7 @@
   },
   "networks": {},
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-07-24T11:03:52.396Z",
+  "updatedAt": "2020-09-07T14:19:11.208Z",
   "devdoc": {
     "author": "dYdX * Interface that Callees for Solo must implement in order to ingest data.",
     "methods": {

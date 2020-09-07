@@ -1,5 +1,7 @@
 {
-  "amount_eth": 100,
+  "token1": "dai",
+  "token2": "eth",
+  "amount_token2": 20,
   "use_mainnet_fork": false,
   "save_to_mongodb": true,
   "txcost_gas_limit": 2000000,

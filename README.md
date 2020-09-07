@@ -44,7 +44,7 @@ npm run test
 
 ### Kovan
 
-`0xf820EaDE5E718939eac7a38979501B3fe2882e80`
+`0xff0FA8974f825D51E4A0DA86FE2E351e78b7b2eB`
 
 ## DYDX Solo Margin Address
 

@@ -5,89 +5,80 @@ import {ChainId, Token, Route, Fetcher, WETH, Trade, TokenAmount, TradeType} fro
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import addresses from "../addresses";
+import chalk from "chalk";
 
-const daiAddress = Util.Address.daiAddress;
-const ethAddress = Util.Address.ethAddress;
+const ethAddress = Util.Address.Token2.ethAddress;
 
 export class Price {
   constructor(public buy: number, public sell: number) {}
 
   // fetch uniswap buy / sell rate
-  static FetchUniswapRates = async (ethPrice: number, amount_eth = Util.Config.amount_eth): Promise<Price> => {
-    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString()).toString();
-    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString()).toString();
+  static FetchUniswapRates = async (
+    tokenPairRate: number,
+    token1Address: string,
+    token2Address: string,
+    amount_token2 = Util.Config.amount_token2
+  ): Promise<Price> => {
+    const amount_token2_wei = ethers.utils.parseEther(amount_token2.toString()).toString();
+    const amount_token1_wei = ethers.utils.parseEther((amount_token2 * tokenPairRate).toString()).toString();
 
-    const DAI = new Token(ChainId.MAINNET, daiAddress, 18);
-    const daiWeth = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
+    const TOKEN1 = new Token(ChainId.MAINNET, token1Address, 18);
+    // default token2 is weth if not set explictly
+    const TOKEN2 = token2Address == ethAddress ? WETH[ChainId.MAINNET] : new Token(ChainId.MAINNET, token2Address, 18);
 
-    // weth to dai
-    const wethToDaiRoute = new Route([daiWeth], WETH[DAI.chainId]);
-    // dai to weth
-    const daiToWethRoute = new Route([daiWeth], DAI);
+    const pair = await Fetcher.fetchPairData(TOKEN1, TOKEN2);
+    const token2ToToken1Route = new Route([pair], TOKEN2);
+    const token1ToToken2Route = new Route([pair], TOKEN1);
 
-    const uniswapResults = await Promise.all([
-      new Trade(daiToWethRoute, new TokenAmount(DAI, amount_dai_wei), TradeType.EXACT_INPUT),
-      new Trade(wethToDaiRoute, new TokenAmount(WETH[DAI.chainId], amount_eth_wei), TradeType.EXACT_INPUT),
-    ]);
+    try {
+      const uniswapResults = await Promise.all([
+        new Trade(token1ToToken2Route, new TokenAmount(TOKEN1, amount_token1_wei), TradeType.EXACT_INPUT),
+        new Trade(token2ToToken1Route, new TokenAmount(TOKEN2, amount_token2_wei), TradeType.EXACT_INPUT),
+      ]);
 
-    return {
-      // todo: uniswapResults[0].executionPrice or uniswapResults[0].nextMidPrice?
-      // https://uniswap.org/docs/v2/advanced-topics/pricing/
-      // https://uniswap.org/docs/v2/javascript-SDK/pricing/
-      buy: parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
-      sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)),
-    };
+      return {
+        // https://uniswap.org/docs/v2/advanced-topics/pricing/
+        // https://uniswap.org/docs/v2/javascript-SDK/pricing/
+        buy: parseFloat(uniswapResults[0].executionPrice.invert().toSignificant(6)),
+        sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)),
+      };
+    } catch (e) {
+      console.log(chalk.red("FetchUniswapRates Error:", e));
+      process.exit();
+    }
   };
 
   // fetch kyber buy / sell rate
-  static FetchKyberRates1 = async (amount_eth = Util.Config.amount_eth): Promise<Price> => {
-    const [buy, sell] = await Promise.all([
-      Price.fetchKyberPriceByAction(Action.Buy, amount_eth),
-      Price.fetchKyberPriceByAction(Action.Sell, amount_eth),
-    ]);
-    return new Price(buy, sell);
-  };
-
-  static FetchKyberRates2 = async (amount_eth = Util.Config.amount_eth): Promise<Price> => {
-    const [buy, sell] = await Promise.all([
-      Price.fetchKyberPriceByAction(Action.Buy, amount_eth, 8),
-      Price.fetchKyberPriceByAction(Action.Sell, amount_eth, 8),
-    ]);
-    return new Price(buy, sell);
-  };
-
-  static FetchKyberRates3 = async (
-    provider: ethers.providers.Provider,
-    ethPrice: number,
-    amount_eth = Util.Config.amount_eth
+  static FetchKyberRates = async (
+    token1Address: string,
+    token2Address: string,
+    amount_token2 = Util.Config.amount_token2
   ): Promise<Price> => {
-    const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-    const amount_eth_wei = ethers.utils.parseEther(amount_eth.toString()).toString();
-    const amount_dai_wei = ethers.utils.parseEther((amount_eth * ethPrice).toString()).toString();
-
-    const kyberResults = await Promise.all([
-      kyber.getExpectedRate(daiAddress, ethAddress, amount_dai_wei),
-      kyber.getExpectedRate(ethAddress, daiAddress, amount_eth_wei),
+    const [buy, sell] = await Promise.all([
+      Price.fetchKyberPriceByAction(Action.Buy, token1Address, token2Address, amount_token2),
+      Price.fetchKyberPriceByAction(Action.Sell, token1Address, token2Address, amount_token2),
     ]);
-
-    return new Price(
-      1 / parseFloat(ethers.utils.formatEther(kyberResults[0].expectedRate)),
-      parseFloat(ethers.utils.formatEther(kyberResults[1].expectedRate))
-    );
+    return new Price(buy, sell);
   };
 
   // private function to fetch kyber buy / sell rate
-  static fetchKyberPriceByAction = async (type: Action, amount_eth: number, platformFee = 0): Promise<number> => {
+  static fetchKyberPriceByAction = async (
+    type: Action,
+    token1Address: string,
+    token2Address: string,
+    amount_token2: number,
+    platformFee = 0
+  ): Promise<number> => {
     const fetch = isNode ? nodeFetch : window.fetch;
-    const endpoint = `https://api.kyber.network/quote_amount?base=${ethAddress}&quote=${daiAddress}&base_amount=${amount_eth}&type=${type}&platformFee=${platformFee}`;
+    const endpoint = `https://api.kyber.network/quote_amount?base=${token2Address}&quote=${token1Address}&base_amount=${amount_token2}&type=${type}&platformFee=${platformFee}`;
     const response = await fetch(endpoint);
     const result = await response.json();
-    return result.data / amount_eth;
+    return result.data / amount_token2;
   };
 
-  static getEtherPrice = async (provider: ethers.providers.Provider) => {
+  static getToken2vsToken1Rate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-    const expectedRate = (await kyber.getExpectedRate(ethAddress, daiAddress, 1)).expectedRate;
+    const expectedRate = (await kyber.getExpectedRate(token2Address, token1Address, 10000)).expectedRate;
     return parseFloat(ethers.utils.formatEther(expectedRate));
   };
 }

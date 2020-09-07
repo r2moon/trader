@@ -25,20 +25,39 @@ if (!privKey) {
   process.exit();
 }
 
+const token1 = Util.Config.token1;
+if (!token1) {
+  console.log(chalk.red("Must assign token for swap"));
+  process.exit();
+}
+if (!Util.Config.isValidToken1()) {
+  console.log(chalk.red("Token1 is unsupported. Assign one of the following tokens: dai | usdc | weth"));
+  process.exit();
+}
+
+const token2 = Util.Config.token2;
+if (!Util.Config.isValidToken2()) {
+  console.log(chalk.red("Token2 is unsupported. Assign one of the following tokens: eth | bat | knc | lend | link | mkr | susd"));
+  process.exit();
+}
+
 // init provider and wallet
 // https://docs.ethers.io/v5/api/providers/other/#WebSocketProvider
 const provider = new ethers.providers.WebSocketProvider(infuraUri);
 const wallet = new ethers.Wallet(privKey, provider);
 
-const amount_eth = Util.Config.amount_eth;
+const amount_token2 = Util.Config.amount_token2;
 const network = Util.Config.network;
 const txcost_gas_limit = Util.Config.txcost_gas_limit;
 const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
 const kyber_service_fee = Util.Config.kyber_service_fee;
 const uniswap_service_fee = Util.Config.uniswap_service_fee;
 const profit_threshold = Util.Config.profit_threshold;
-const daiAddress = Util.Address.daiAddress;
+
+const token1Address = Util.Address.Token1.resolveTokenAddress(token1);
+const token2Address = Util.Address.Token2.resolveTokenAddress(token2);
 const soloMarginAddress = Util.Address.soloMarginAddress;
+const ethAddress = Util.Address.Token2.ethAddress;
 
 // define how many blocks to wait after an arb is identified and a trade is made
 const wait_blocks = Util.Config.wait_blocks;
@@ -47,35 +66,36 @@ let wait_blocks_arr: Array<number> = [];
 const main = async () => {
   const networkId = network.network_id;
   console.log(`Network ID is ${networkId}`);
+  console.log(`Token1 is ${token1}`);
+  console.log(`Token2 is ${token2}`);
 
   // https://docs.ethers.io/v5/api/providers/provider/
   provider.on("block", async (block) => {
     console.log(`New block received. Block number: ${block}`);
 
-    const ethPrice = await Price.getEtherPrice(provider);
-    console.log(chalk.magenta(`eth price is ${ethPrice}`));
+    // eth price is just used to calc profit. We use dai to get eth / usd rate
+    const ethPrice = await Price.getToken2vsToken1Rate(Util.Address.Token1.daiAddress, ethAddress, provider);
+    console.log(`eth price is ${ethPrice}`);
 
-    const amount_dai = amount_eth * ethPrice;
-    const amount_dai_wei = ethers.utils.parseEther(amount_dai.toString());
+    // token2 / token1 rate
+    const tokenPairRate = await Price.getToken2vsToken1Rate(token1Address, token2Address, provider);
+    console.log(chalk.green(`${token2}/${token1} rate: ${tokenPairRate}`));
+
+    const token1EthRate = await Price.getToken2vsToken1Rate(token1Address, ethAddress, provider);
+
+    const amount_token1 = amount_token2 * tokenPairRate;
+    const amount_token1_wei = ethers.utils.parseEther(amount_token1.toString());
 
     // fetch kyber buy / sell rates
-    const kyberRates = await Price.FetchKyberRates1();
-    const kyberRates2 = await Price.FetchKyberRates2();
-    const kyberRates3 = await Price.FetchKyberRates3(provider, ethPrice);
-    console.log(chalk.green("Kyber ETH/DAI - Platform fee 0"));
+    const kyberRates = await Price.FetchKyberRates(token1Address, token2Address, amount_token2);
+    console.log(chalk.green(`Kyber ${token2}/${token1}`));
     console.log(kyberRates);
 
-    console.log(chalk.green("Kyber ETH/DAI - Platform fee 8"));
-    console.log(kyberRates2);
-
-    console.log(chalk.green("Kyber ETH/DAI - expected rate"));
-    console.log(kyberRates3);
-
-    const uniswapRates = await Price.FetchUniswapRates(ethPrice);
-    console.log(chalk.blue("Uniswap ETH/DAI"));
+    const uniswapRates = await Price.FetchUniswapRates(tokenPairRate, token1Address, token2Address);
+    console.log(chalk.blue(`Uniswap ${token2}/${token1}`));
     console.log(uniswapRates);
 
-    saveBlockInfo(block, kyberRates, kyberRates2, kyberRates3, uniswapRates);
+    saveBlockInfo(block, kyberRates, uniswapRates);
 
     // skip block if an arb was just identified
     if (wait_blocks_arr.includes(block)) {
@@ -84,16 +104,23 @@ const main = async () => {
       return;
     }
 
-    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
-      const direction = kyberRates.buy < uniswapRates.sell ? Direction.KYBER_TO_UNISWAP : Direction.UNISWAP_TO_KYBER;
+    if (/*kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell*/ true) {
+      // prettier-ignore
+      const direction =
+        kyberRates.buy < uniswapRates.sell
+          ? token2 == "eth"
+            ? Direction.KYBER_TO_UNISWAP
+            : Direction.KYBER_TOKEN_UNISWAP
+          : token2 == "eth"
+            ? Direction.UNISWAP_TO_KYBER
+            : Direction.UNISWAP_TOKEN_KYBER;
+
       const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
       const avgGasPrice = await provider.getGasPrice();
 
       const [gasPrice, gasLimit] = await Promise.all([
         // avg gas price + 10Gwei set in config.json
         avgGasPrice.add(txcost_gas_price_buff_in_wei),
-        // set gaslimit to 1200000 based on this tx
-        // https://bloxy.info/tx/0xaa45cb18083e42eb77fd011e8ef6e93750fca6ebdddb803859db2c99c10818dc
         txcost_gas_limit,
       ]);
 
@@ -102,12 +129,16 @@ const main = async () => {
       const txCost = gasPrice.mul(gasLimit);
       console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)`);
 
-      const unitGross = direction == Direction.KYBER_TO_UNISWAP ? uniswapRates.sell - kyberRates.buy : kyberRates.sell - uniswapRates.buy;
-      const gross = amount_eth * unitGross;
-      console.log(`gross is ${gross} USD`);
+      const unitGross =
+        direction == (Direction.KYBER_TO_UNISWAP || Direction.KYBER_TOKEN_UNISWAP)
+          ? uniswapRates.sell - kyberRates.buy
+          : kyberRates.sell - uniswapRates.buy;
 
-      const kyberServiceFee = amount_dai * kyber_service_fee;
-      const uniswapServiceFee = amount_dai * uniswap_service_fee;
+      const gross = amount_token2 * unitGross;
+      console.log(`gross is ${gross} ${token1} (${(gross / token1EthRate) * ethPrice} USD)`);
+
+      const kyberServiceFee = ((amount_token1 * kyber_service_fee) / token1EthRate) * ethPrice;
+      const uniswapServiceFee = ((amount_token1 * uniswap_service_fee) / token1EthRate) * ethPrice;
       console.log(`kyber service fee is ${kyberServiceFee} USD`);
       console.log(`uniswap service fee is ${uniswapServiceFee} USD`);
 
@@ -134,13 +165,10 @@ const main = async () => {
         }
 
         console.log(chalk.green("Arbitrage opportunity found!"));
-        console.log(chalk.green(`Direction: ${direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"}`));
-        console.log(`Expected profit: ${profit} dai`);
+        console.log(chalk.green(`Direction: ${resolveDirection(direction)}`));
+        console.log(`Expected profit: ${profit} USD`);
 
-        const record = `Time: ${new Date().toISOString()}, Block: ${block}, Direction: ${
-          direction == Direction.KYBER_TO_UNISWAP ? "Kyber => Uniswap" : "Uniswap => Kyber"
-        }, profit: ${profit}\n`;
-
+        const record = `Time: ${new Date().toISOString()}, Block: ${block}, Direction: ${resolveDirection(direction)}, profit: ${profit}\n`;
         // save arbs to local file
         fs.appendFile("arbs.log", record, (err) => {
           if (err) console.log(err);
@@ -152,7 +180,14 @@ const main = async () => {
         };
 
         try {
-          const tx = await flashloan.initateFlashLoan(soloMarginAddress, daiAddress, amount_dai_wei, direction, options);
+          const tx = await flashloan.initateFlashLoan(
+            soloMarginAddress,
+            amount_token1_wei,
+            token1Address,
+            token2Address,
+            direction,
+            options
+          );
           const recipt = await tx.wait();
           const txHash = recipt.transactionHash;
           console.log(`Transaction hash: ${txHash}`);
@@ -171,17 +206,15 @@ const main = async () => {
 export enum Direction {
   KYBER_TO_UNISWAP = 0,
   UNISWAP_TO_KYBER = 1,
+  KYBER_TOKEN_UNISWAP = 2,
+  UNISWAP_TOKEN_KYBER = 3,
 }
 
-const saveBlockInfo = async (block: number, kyberPrice1: Price, kyberPrice2: Price, kyberPrice3: Price, uniwapPrice: Price) => {
+const saveBlockInfo = async (block: number, kyberPrice: Price, uniwapPrice: Price) => {
   const blockInfo = {
     block,
-    kyberBuyFee0: kyberPrice1.buy,
-    kyberSellFee0: kyberPrice1.sell,
-    kyberBuyFee8: kyberPrice2.buy,
-    kyberSellFee8: kyberPrice2.sell,
-    kyberBuyExpectedRate: kyberPrice3.buy,
-    kyberSellExpectedRate: kyberPrice3.sell,
+    kyberBuy: kyberPrice.buy,
+    kyberSell: kyberPrice.sell,
     uniswapBuy: uniwapPrice.buy,
     uniswapSell: uniwapPrice.sell,
   };
@@ -229,6 +262,22 @@ const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
       if (err) console.log(err);
     });
   });
+};
+
+const resolveDirection = (direction: Direction, token?: string): string => {
+  switch (direction) {
+    case Direction.KYBER_TO_UNISWAP:
+      return "Kyber to Uniswap";
+    case Direction.UNISWAP_TO_KYBER:
+      return "Uniswap to Kyber";
+    case Direction.KYBER_TOKEN_UNISWAP:
+      return `Kyber token Uniswap ${token}`;
+    case Direction.UNISWAP_TOKEN_KYBER:
+      return `Uniswap token Kyber ${token}`;
+    default:
+      // no, it's impossible
+      return "Unknown";
+  }
 };
 
 // save data to mongodb atlas
