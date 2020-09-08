@@ -24,7 +24,7 @@ export async function startGanache() {
   const server = Ganache.server({
     fork: infuraUri,
     network_id: networkId,
-    accounts: [{secretKey: privKey, balance: 1e24}],
+    accounts: [{secretKey: privKey, balance: 1e20}],
     gasLimit: 6000000,
   });
 
@@ -32,6 +32,7 @@ export async function startGanache() {
   return server;
 }
 
+// deploy testable flashloan on demand
 export async function deployContracts(): Promise<Addresses> {
   console.log(chalk.green("Deploying VaultManager Contract"));
   const vaultManagerFactory = new ethers.ContractFactory(VaultManagerContract.abi, VaultManagerContract.bytecode, wallet());
@@ -39,7 +40,7 @@ export async function deployContracts(): Promise<Addresses> {
 
   console.log(chalk.green("Deploying DaiFaucet Contract"));
   const daiFaucetFactory = new ethers.ContractFactory(DaiFaucetContract.abi, DaiFaucetContract.bytecode, wallet());
-  const daiFaucetContract = await daiFaucetFactory.deploy(addresses.tokens.dai);
+  const daiFaucetContract = await daiFaucetFactory.deploy(addresses.tokens.token1.dai);
 
   await vaultManagerContract.deployed();
   await daiFaucetContract.deployed();
@@ -52,8 +53,7 @@ export async function deployContracts(): Promise<Addresses> {
   const flashloanContract = await flashloanFactory.deploy(
     addresses.kyber.kyberNetworkProxy,
     addresses.uniswap.router,
-    addresses.tokens.weth,
-    addresses.tokens.dai,
+    addresses.tokens.token1.weth,
     daiFaucetContract.address,
     wallet().address
   );

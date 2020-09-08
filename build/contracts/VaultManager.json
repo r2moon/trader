@@ -3994,12 +3994,13 @@
     "1": {
       "events": {},
       "links": {},
-      "address": "0x1385b1a98BCeEc2A3805217ff7Bf7C78d266F121",
-      "transactionHash": "0xb96dda925638062eeb50b658237b4ba477db69211e3aa39ea5a0afd1dadafd58"
+      "address": "0x5d4Eca97Cd7D04a8802049F1FFBbf2387c121f8a",
+      "transactionHash": "0x46039fc8e77c88bafef742441032f086e8b9e70ae98f9f91d65dd53b11ae7e00"
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-09-07T14:19:11.195Z",
+  "updatedAt": "2020-09-08T17:09:22.200Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

@@ -51,7 +51,6 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     bytes memory data
   ) public {
     ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));
-
     /**
      * token1 should be one the following tokens, we check it on script side
      * USDC | DAI | WETH
@@ -63,8 +62,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
      */
     IERC20 token2 = IERC20(arbInfo.token2);
 
-    uint256 balanceToken1 = token1.balanceOf(address(this));
-    uint256 balanceToken2 = token2.balanceOf(address(this));
+    uint256 balanceSrc = token1.balanceOf(address(this));
     uint256 deadline = block.timestamp + 300; // add 300 millisec buffer time just in case it exceeds trading deadline
 
     require(
@@ -77,9 +75,9 @@ contract Flashloan is ICallee, DydxFlashloanBase {
 
     if (arbInfo.direction == Direction.KyberToUniswap) {
       // Buy ETH on Kyber
-      require(token1.approve(address(kyber), balanceToken1), "Could not approve! (KyberToUniswap Buy ETH on Kyber)");
-      (uint256 expectedRate, ) = kyber.getExpectedRate(token1, IERC20(KYBER_ETH_ADDRESS), balanceToken1);
-      kyber.swapTokenToEther(token1, balanceToken1, expectedRate);
+      require(token1.approve(address(kyber), balanceSrc), "Could not approve! (KyberToUniswap Buy ETH on Kyber)");
+      (uint256 expectedRate, ) = kyber.getExpectedRate(token1, IERC20(KYBER_ETH_ADDRESS), balanceSrc);
+      kyber.swapTokenToEther(token1, balanceSrc, expectedRate);
 
       // Sell ETH on Uniswap
       address[] memory path = new address[](2);
@@ -91,12 +89,12 @@ contract Flashloan is ICallee, DydxFlashloanBase {
 
     if (arbInfo.direction == Direction.UniswapToKyber) {
       // Buy ETH on Uniswap
-      require(token1.approve(address(uniswap), balanceToken1), "Could not approve! (UniswapToKyber Buy ETH on Uniswap)");
+      require(token1.approve(address(uniswap), balanceSrc), "Could not approve! (UniswapToKyber Buy ETH on Uniswap)");
       address[] memory path = new address[](2);
       path[0] = address(token1);
       path[1] = address(weth);
-      uint256[] memory minOuts = uniswap.getAmountsOut(balanceToken1, path);
-      uniswap.swapExactTokensForETH(balanceToken1, minOuts[1], path, address(this), deadline);
+      uint256[] memory minOuts = uniswap.getAmountsOut(balanceSrc, path);
+      uniswap.swapExactTokensForETH(balanceSrc, minOuts[1], path, address(this), deadline);
 
       // Sell ETH on Kyber
       (uint256 expectedRate, ) = kyber.getExpectedRate(IERC20(KYBER_ETH_ADDRESS), token1, address(this).balance);
@@ -105,33 +103,34 @@ contract Flashloan is ICallee, DydxFlashloanBase {
 
     if (arbInfo.direction == Direction.KyberTokenUniswap) {
       // Buy TOKEN2 on Kyber
-      require(token1.approve(address(kyber), balanceToken1), "Could not approve! (KyberTokenUniswap Buy TOKEN2 on Kyber)");
-      (uint256 expectedRate, ) = kyber.getExpectedRate(token1, token2, balanceToken1);
-      kyber.swapTokenToToken(token1, balanceToken1, token2, expectedRate); // switched to swaptoken
+      require(token1.approve(address(kyber), balanceSrc), "Could not approve! (KyberTokenUniswap Buy TOKEN2 on Kyber)");
+      (uint256 expectedRate, ) = kyber.getExpectedRate(token1, token2, balanceSrc);
+      uint256 balanceDest = kyber.swapTokenToToken(token1, balanceSrc, token2, expectedRate); // switched to swaptoken
 
       // Sell TOKEN2 on Uniswap
       // token approve needed for 2nd token on token to token exchange
-      require(token2.approve(address(uniswap), balanceToken2), "Could not approve! (KyberTokenUniswap Sell TOKEN2 on Uniswap)");
+      require(token2.approve(address(uniswap), balanceDest), "Could not approve! (KyberTokenUniswap Sell TOKEN2 on Uniswap)");
       address[] memory path = new address[](2);
       path[0] = address(token2);
       path[1] = address(token1);
-      uint256[] memory minOuts = uniswap.getAmountsOut(balanceToken2, path);
-      uniswap.swapExactTokensForTokens(balanceToken2, minOuts[1], path, address(this), deadline);
+      uint256[] memory minOuts = uniswap.getAmountsOut(balanceDest, path);
+      uniswap.swapExactTokensForTokens(balanceDest, minOuts[1], path, address(this), deadline);
     }
 
     if (arbInfo.direction == Direction.UniswapTokenKyber) {
       // Buy TOKEN2 on Uniswap
-      require(token1.approve(address(uniswap), balanceToken1), "Could not approve! (UniswapTokenKyber Buy ETH on Uniswap)");
+      require(token1.approve(address(uniswap), balanceSrc), "Could not approve! (UniswapTokenKyber Buy ETH on Uniswap)");
       address[] memory path = new address[](2);
       path[0] = address(token1);
       path[1] = address(token2);
-      uint256[] memory minOuts = uniswap.getAmountsOut(balanceToken1, path);
-      uniswap.swapExactTokensForTokens(balanceToken1, minOuts[1], path, address(this), deadline);
+      uint256[] memory minOuts = uniswap.getAmountsOut(balanceSrc, path);
+      uint256[] memory amounts = uniswap.swapExactTokensForTokens(balanceSrc, minOuts[1], path, address(this), deadline);
 
       // Sell TOKEN2 on Kyber
-      require(token2.approve(address(kyber), balanceToken2), "Could not approve! (UniswapTokenKyber Sell Token on Kyber)");
-      (uint256 expectedRate, ) = kyber.getExpectedRate(token2, token1, balanceToken2);
-      kyber.swapTokenToToken(token2, balanceToken2, token1, expectedRate);
+      uint256 balanceDest = amounts[0];
+      require(token2.approve(address(kyber), balanceDest), "Could not approve! (UniswapTokenKyber Sell Token on Kyber)");
+      (uint256 expectedRate, ) = kyber.getExpectedRate(token2, token1, balanceDest);
+      kyber.swapTokenToToken(token2, balanceDest, token1, expectedRate);
     }
 
     uint256 balance = token1.balanceOf(address(this));

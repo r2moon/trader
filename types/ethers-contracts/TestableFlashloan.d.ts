@@ -22,7 +22,7 @@ import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 interface TestableFlashloanInterface extends ethers.utils.Interface {
   functions: {
     "callFunction(address,tuple,bytes)": FunctionFragment;
-    "initateFlashLoan(address,address,uint256,uint8)": FunctionFragment;
+    "initateFlashLoan(address,uint256,address,address,uint8)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -31,7 +31,7 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initateFlashLoan",
-    values: [string, string, BigNumberish, BigNumberish]
+    values: [string, BigNumberish, string, string, BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -44,17 +44,23 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
   ): Result;
 
   events: {
-    "GetBalanceDAI(uint256)": EventFragment;
+    "GetBalanceDest(uint256)": EventFragment;
+    "GetBalanceSrc(uint256)": EventFragment;
+    "GetDirection(uint8)": EventFragment;
+    "GetFinalBalance(uint256)": EventFragment;
     "GetKyberExpectedRate(uint256)": EventFragment;
-    "GetMinOuts(uint256[])": EventFragment;
     "GetProfit(int256)": EventFragment;
-    "NewArbitrage(uint8,uint256,uint256)": EventFragment;
+    "GetUniswapMinOuts(uint256[])": EventFragment;
+    "NewArbitrage(uint8,address,address,uint256,uint256)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "GetBalanceDAI"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetBalanceDest"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetBalanceSrc"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetDirection"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetFinalBalance"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetKyberExpectedRate"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GetMinOuts"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetProfit"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetUniswapMinOuts"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewArbitrage"): EventFragment;
 }
 
@@ -88,16 +94,18 @@ export class TestableFlashloan extends Contract {
 
     initateFlashLoan(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "initateFlashLoan(address,address,uint256,uint8)"(
+    "initateFlashLoan(address,uint256,address,address,uint8)"(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
@@ -119,16 +127,18 @@ export class TestableFlashloan extends Contract {
 
   initateFlashLoan(
     _solo: string,
-    _token: string,
     _amount: BigNumberish,
+    _token1: string,
+    _token2: string,
     _direction: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "initateFlashLoan(address,address,uint256,uint8)"(
+  "initateFlashLoan(address,uint256,address,address,uint8)"(
     _solo: string,
-    _token: string,
     _amount: BigNumberish,
+    _token1: string,
+    _token2: string,
     _direction: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
@@ -150,34 +160,44 @@ export class TestableFlashloan extends Contract {
 
     initateFlashLoan(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    "initateFlashLoan(address,address,uint256,uint8)"(
+    "initateFlashLoan(address,uint256,address,address,uint8)"(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
-    GetBalanceDAI(balance: BigNumberish | null): EventFilter;
+    GetBalanceDest(balance: BigNumberish | null): EventFilter;
+
+    GetBalanceSrc(balance: BigNumberish | null): EventFilter;
+
+    GetDirection(direction: BigNumberish | null): EventFilter;
+
+    GetFinalBalance(balance: BigNumberish | null): EventFilter;
 
     GetKyberExpectedRate(expectedRate: BigNumberish | null): EventFilter;
 
-    GetMinOuts(minOuts: null): EventFilter;
-
     GetProfit(profit: BigNumberish | null): EventFilter;
+
+    GetUniswapMinOuts(minOuts: null): EventFilter;
 
     NewArbitrage(
       direction: BigNumberish | null,
-      profit: BigNumberish | null,
-      date: BigNumberish | null
+      token1: string | null,
+      token2: string | null,
+      profit: null,
+      date: null
     ): EventFilter;
   };
 
@@ -198,16 +218,18 @@ export class TestableFlashloan extends Contract {
 
     initateFlashLoan(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "initateFlashLoan(address,address,uint256,uint8)"(
+    "initateFlashLoan(address,uint256,address,address,uint8)"(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
@@ -230,16 +252,18 @@ export class TestableFlashloan extends Contract {
 
     initateFlashLoan(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "initateFlashLoan(address,address,uint256,uint8)"(
+    "initateFlashLoan(address,uint256,address,address,uint8)"(
       _solo: string,
-      _token: string,
       _amount: BigNumberish,
+      _token1: string,
+      _token2: string,
       _direction: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
