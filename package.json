@@ -5,7 +5,7 @@
   "license": "ISC",
   "scripts": {
     "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
-    "prepare": "tsc",
+    "prepare": "tsc -p tsconfig.json",
     "start": "ts-node src/run-arbitrage.ts 2>>error.log",
     "start:windows": "ts-node src/run-arbitrage.ts",
     "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<infura project id>> --account='<<private key>>,1000000000000000000000'",

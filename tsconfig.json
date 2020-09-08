@@ -14,5 +14,5 @@
     "skipLibCheck": true
   },
   "include": ["tests", "addresses", "src"],
-  "exclude": ["dest", "node_modules"]
+  "exclude": ["dest", "node_modules", "types"]
 }
