@@ -134,7 +134,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     }
 
     uint256 balance = token1.balanceOf(address(this));
-    require(balance - arbInfo.repayAmount >= 0, "Not enough funds to repay dydx loan!");
+    require(balance > arbInfo.repayAmount, "Not enough funds to repay dydx loan!");
 
     uint256 profit = balance - arbInfo.repayAmount;
     require(token1.transfer(beneficiary, profit), "Could not transfer back the profit!");
