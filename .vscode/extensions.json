@@ -1,7 +1,3 @@
 {
-  "recommendations": [
-    "juanblanco.solidity",
-    "ms-azuretools.vscode-docker",
-    "ms-vscode-remote.remote-containers"
-  ]
+  "recommendations": ["juanblanco.solidity"]
 }

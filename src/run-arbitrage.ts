@@ -104,7 +104,7 @@ const main = async () => {
       return;
     }
 
-    if (/*kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell*/ true) {
+    if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
       // prettier-ignore
       const direction =
         kyberRates.buy < uniswapRates.sell

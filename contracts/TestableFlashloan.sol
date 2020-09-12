@@ -27,7 +27,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
   event GetBalanceSrc(uint256 indexed balance);
   event GetBalanceDest(uint256 indexed balance);
   event GetFinalBalance(uint256 indexed balance);
-  event GetProfit(int256 indexed profit);
+  event GetRepayAmount(uint256 indexed repayAmount);
   event NewArbitrage(Direction indexed direction, address indexed token1, address indexed token2, uint256 profit, uint256 date);
 
   IKyberNetworkProxy kyber;
@@ -149,16 +149,16 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
     }
 
     uint256 balance = token1.balanceOf(address(this));
-    int256 profit = int256(token1.balanceOf(address(this)) - arbInfo.repayAmount);
+    uint256 repayAmount = arbInfo.repayAmount;
 
     emit GetFinalBalance(balance);
-    emit GetProfit(profit);
+    emit GetRepayAmount(repayAmount);
 
-    if (balance < arbInfo.repayAmount) {
-      daiFaucet.sendDai(arbInfo.repayAmount - balance);
+    if (balance < repayAmount) {
+      daiFaucet.sendDai(repayAmount - balance);
     }
 
-    uint256 positiveProfit = token1.balanceOf(address(this)) - arbInfo.repayAmount;
+    uint256 positiveProfit = token1.balanceOf(address(this)) - repayAmount;
     token1.transfer(beneficiary, positiveProfit);
     emit NewArbitrage(arbInfo.direction, arbInfo.token1, arbInfo.token2, positiveProfit, now);
   }
