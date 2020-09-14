@@ -45,16 +45,16 @@ export class Util {
       static wethAddress = ethers.utils.getAddress(addresses.tokens.token1.weth);
       static usdcAddress = ethers.utils.getAddress(addresses.tokens.token1.usdc);
 
-      static resolveTokenAddress(token: string): string {
+      static resolveToken(token: string): Token {
         switch (token) {
           case "dai":
-            return this.daiAddress;
+            return new Token(this.daiAddress);
           case "weth":
-            return this.wethAddress;
+            return new Token(this.wethAddress);
           case "usdc":
-            return this.usdcAddress;
+            return new Token(this.usdcAddress, 6); // usdc has 6 decimals
           default:
-            return "";
+            return Token.InvalidToken;
         }
       }
     };
@@ -68,29 +68,33 @@ export class Util {
       static susdAddress = ethers.utils.getAddress(addresses.tokens.token2.susd);
       static batAddress = ethers.utils.getAddress(addresses.tokens.token2.bat);
 
-      static resolveTokenAddress(token: string): string {
+      static resolveToken(token: string): Token {
         switch (token) {
           case "knc":
-            return this.kncAddress;
+            return new Token(this.kncAddress);
           case "lend":
-            return this.lendAddress;
+            return new Token(this.lendAddress);
           case "link":
-            return this.linkAddress;
+            return new Token(this.linkAddress);
           case "mkr":
-            return this.mkrAddress;
+            return new Token(this.mkrAddress);
           case "susd":
-            return this.susdAddress;
+            return new Token(this.susdAddress);
           case "bat":
-            return this.batAddress;
+            return new Token(this.batAddress);
           case "eth":
-            return this.ethAddress;
-
+            return new Token(this.ethAddress);
           default:
-            return "";
+            return Token.InvalidToken;
         }
       }
     };
 
     static soloMarginAddress = ethers.utils.getAddress(addresses.dydx.solo);
   };
+}
+
+export class Token {
+  constructor(public address: string, public decimails: number = 18) {}
+  static InvalidToken = new Token("", -1);
 }

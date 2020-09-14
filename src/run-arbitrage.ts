@@ -54,8 +54,10 @@ const kyber_service_fee = Util.Config.kyber_service_fee;
 const uniswap_service_fee = Util.Config.uniswap_service_fee;
 const profit_threshold = Util.Config.profit_threshold;
 
-const token1Address = Util.Address.Token1.resolveTokenAddress(token1);
-const token2Address = Util.Address.Token2.resolveTokenAddress(token2);
+const token1Config = Util.Address.Token1.resolveToken(token1);
+const token1Address = token1Config.address;
+const token2Config = Util.Address.Token1.resolveToken(token2);
+const token2Address = token2Config.address;
 const soloMarginAddress = Util.Address.soloMarginAddress;
 const ethAddress = Util.Address.Token2.ethAddress;
 
@@ -74,24 +76,22 @@ const main = async () => {
     console.log(`New block received. Block number: ${block}`);
 
     // eth price is just used to calc profit. We use dai to get eth / usd rate
-    const ethPrice = await Price.getToken2vsToken1Rate(Util.Address.Token1.daiAddress, ethAddress, provider);
-    console.log(`eth price is ${ethPrice}`);
+    const ethPrice = 1 / (await Price.getToken1vsToken2Rate(Util.Address.Token1.daiAddress, ethAddress, provider));
 
     // token2 / token1 rate
-    const tokenPairRate = await Price.getToken2vsToken1Rate(token1Address, token2Address, provider);
+    const tokenPairRate = 1 / (await Price.getToken1vsToken2Rate(token1Address, token2Address, provider));
     console.log(chalk.green(`${token2}/${token1} rate: ${tokenPairRate}`));
 
-    const token1EthRate = await Price.getToken2vsToken1Rate(token1Address, ethAddress, provider);
+    const token1EthRate = 1 / (await Price.getToken1vsToken2Rate(token1Address, ethAddress, provider));
 
     const amount_token1 = amount_token2 * tokenPairRate;
     const amount_token1_wei = ethers.utils.parseEther(amount_token1.toString());
-
     // fetch kyber buy / sell rates
     const kyberRates = await Price.FetchKyberRates(token1Address, token2Address, amount_token2);
     console.log(chalk.green(`Kyber ${token2}/${token1}`));
     console.log(kyberRates);
 
-    const uniswapRates = await Price.FetchUniswapRates(tokenPairRate, token1Address, token2Address);
+    const uniswapRates = await Price.FetchUniswapRates(provider, tokenPairRate, token1Config, token2Config);
     console.log(chalk.blue(`Uniswap ${token2}/${token1}`));
     console.log(uniswapRates);
 

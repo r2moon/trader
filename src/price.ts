@@ -1,6 +1,6 @@
 import isNode from "detect-node";
 import nodeFetch from "node-fetch";
-import {Util} from "./util";
+import {Util, Token as TokenConfig} from "./util";
 import {ChainId, Token, Route, Fetcher, WETH, Trade, TokenAmount, TradeType} from "@uniswap/sdk";
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
@@ -14,19 +14,38 @@ export class Price {
 
   // fetch uniswap buy / sell rate
   static FetchUniswapRates = async (
+    provider: ethers.providers.Provider,
     tokenPairRate: number,
-    token1Address: string,
-    token2Address: string,
+    token1Config: TokenConfig,
+    token2Config: TokenConfig,
     amount_token2 = Util.Config.amount_token2
   ): Promise<Price> => {
-    const amount_token2_wei = ethers.utils.parseEther(amount_token2.toString()).toString();
-    const amount_token1_wei = ethers.utils.parseEther((amount_token2 * tokenPairRate).toString()).toString();
+    // token2 / eth rate
+    const token2EthRate =
+      token2Config.address == ethAddress ? 1 : await Price.getToken1vsToken2Rate(token2Config.address, ethAddress, provider);
 
-    const TOKEN1 = new Token(ChainId.MAINNET, token1Address, 18);
+    const amount_token2_eth = amount_token2 * token2EthRate;
+
+    const amount_token1_wei = ethers.utils
+      .parseEther((amount_token2_eth * tokenPairRate).toFixed(6).toString())
+      .div(Math.pow(10, 18 - token1Config.decimails))
+      .toString();
+
+    const amount_token2_wei = ethers.utils
+      .parseEther(amount_token2_eth.toFixed(6).toString())
+      .div(Math.pow(10, 18 - token2Config.decimails))
+      .toString();
+
+    const TOKEN1 = new Token(ChainId.MAINNET, token1Config.address, token1Config.decimails);
     // default token2 is weth if not set explictly
-    const TOKEN2 = token2Address == ethAddress ? WETH[ChainId.MAINNET] : new Token(ChainId.MAINNET, token2Address, 18);
+    const TOKEN2 =
+      token2Config.address == ethAddress ? WETH[ChainId.MAINNET] : new Token(ChainId.MAINNET, token2Config.address, token2Config.decimails);
 
     const pair = await Fetcher.fetchPairData(TOKEN1, TOKEN2);
+
+    // console.log(chalk.magenta("Current uniswap token1 mid price:", pair.token0Price.toSignificant(6)));
+    // console.log(chalk.magenta("Current uniswap token2 mid price:", pair.token1Price.toSignificant(6)));
+
     const token2ToToken1Route = new Route([pair], TOKEN2);
     const token1ToToken2Route = new Route([pair], TOKEN1);
 
@@ -43,8 +62,9 @@ export class Price {
         sell: parseFloat(uniswapResults[1].executionPrice.toSignificant(6)),
       };
     } catch (e) {
-      console.log(chalk.red("FetchUniswapRates Error:", e));
-      process.exit();
+      // console.log(chalk.red("FetchUniswapRates Error:", e));
+      // process.exit();
+      return new Price(0, 0);
     }
   };
 
@@ -76,9 +96,9 @@ export class Price {
     return result.data / amount_token2;
   };
 
-  static getToken2vsToken1Rate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
+  static getToken1vsToken2Rate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-    const expectedRate = (await kyber.getExpectedRate(token2Address, token1Address, 10000)).expectedRate;
+    const expectedRate = (await kyber.getExpectedRate(token1Address, token2Address, 1e6)).expectedRate;
     return parseFloat(ethers.utils.formatEther(expectedRate));
   };
 }

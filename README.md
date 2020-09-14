@@ -37,6 +37,7 @@ yarn test
 ## Token Address for different networks
 
 `https://developer.kyber.network/docs/Environments-Kovan/`
+`https://api.kyber.network/currencies`
 
 ## Uniswap Router Address
 
