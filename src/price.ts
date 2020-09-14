@@ -28,18 +28,18 @@ export class Price {
 
     const amount_token1_wei = ethers.utils
       .parseEther((amount_token2_eth * tokenPairRate).toFixed(6).toString())
-      .div(Math.pow(10, 18 - token1Config.decimails))
+      .div(Math.pow(10, 18 - token1Config.decimals))
       .toString();
 
     const amount_token2_wei = ethers.utils
       .parseEther(amount_token2_eth.toFixed(6).toString())
-      .div(Math.pow(10, 18 - token2Config.decimails))
+      .div(Math.pow(10, 18 - token2Config.decimals))
       .toString();
 
-    const TOKEN1 = new Token(ChainId.MAINNET, token1Config.address, token1Config.decimails);
+    const TOKEN1 = new Token(ChainId.MAINNET, token1Config.address, token1Config.decimals);
     // default token2 is weth if not set explictly
     const TOKEN2 =
-      token2Config.address == ethAddress ? WETH[ChainId.MAINNET] : new Token(ChainId.MAINNET, token2Config.address, token2Config.decimails);
+      token2Config.address == ethAddress ? WETH[ChainId.MAINNET] : new Token(ChainId.MAINNET, token2Config.address, token2Config.decimals);
 
     const pair = await Fetcher.fetchPairData(TOKEN1, TOKEN2);
 

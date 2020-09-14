@@ -95,6 +95,6 @@ export class Util {
 }
 
 export class Token {
-  constructor(public address: string, public decimails: number = 18) {}
+  constructor(public address: string, public decimals: number = 18) {}
   static InvalidToken = new Token("", -1);
 }

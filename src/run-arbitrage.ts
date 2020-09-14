@@ -56,7 +56,7 @@ const profit_threshold = Util.Config.profit_threshold;
 
 const token1Config = Util.Address.Token1.resolveToken(token1);
 const token1Address = token1Config.address;
-const token2Config = Util.Address.Token1.resolveToken(token2);
+const token2Config = Util.Address.Token2.resolveToken(token2);
 const token2Address = token2Config.address;
 const soloMarginAddress = Util.Address.soloMarginAddress;
 const ethAddress = Util.Address.Token2.ethAddress;
