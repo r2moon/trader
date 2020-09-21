@@ -9,7 +9,7 @@ export class Util {
     static token1 = config.token1.toLowerCase();
     // fallback to eth if token2 set as empty
     static token2 = (config.token2 ? config.token2 : "eth").toLowerCase();
-    static amount_token2 = config.amount_token2;
+    static amount_token1 = config.amount_token1;
     static network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
     static txcost_gas_price_buff_in_wei = config.txcost_gas_price_buff_in_wei;
     static txcost_gas_limit = config.txcost_gas_limit;
@@ -48,11 +48,11 @@ export class Util {
       static resolveToken(token: string): Token {
         switch (token) {
           case "dai":
-            return new Token(this.daiAddress);
+            return new Token("dai", this.daiAddress);
           case "weth":
-            return new Token(this.wethAddress);
+            return new Token("weth", this.wethAddress);
           case "usdc":
-            return new Token(this.usdcAddress, 6); // usdc has 6 decimals
+            return new Token("usdc", this.usdcAddress, 6); // usdc has 6 decimals
           default:
             return Token.InvalidToken;
         }
@@ -71,19 +71,19 @@ export class Util {
       static resolveToken(token: string): Token {
         switch (token) {
           case "knc":
-            return new Token(this.kncAddress);
+            return new Token("knc", this.kncAddress);
           case "lend":
-            return new Token(this.lendAddress);
+            return new Token("lend", this.lendAddress);
           case "link":
-            return new Token(this.linkAddress);
+            return new Token("link", this.linkAddress);
           case "mkr":
-            return new Token(this.mkrAddress);
+            return new Token("mkr", this.mkrAddress);
           case "susd":
-            return new Token(this.susdAddress);
+            return new Token("susd", this.susdAddress);
           case "bat":
-            return new Token(this.batAddress);
+            return new Token("bat", this.batAddress);
           case "eth":
-            return new Token(this.ethAddress);
+            return new Token("eth", this.ethAddress);
           default:
             return Token.InvalidToken;
         }
@@ -95,6 +95,6 @@ export class Util {
 }
 
 export class Token {
-  constructor(public address: string, public decimals: number = 18) {}
-  static InvalidToken = new Token("", -1);
+  constructor(public name: string, public address: string, public decimals: number = 18) {}
+  static InvalidToken = new Token("NA", "", -1);
 }
