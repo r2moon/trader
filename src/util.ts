@@ -6,10 +6,7 @@ import {ethers} from "ethers";
 
 export class Util {
   static Config = class {
-    static token1 = config.token1.toLowerCase();
-    // fallback to eth if token2 set as empty
-    static token2 = (config.token2 ? config.token2 : "eth").toLowerCase();
-    static amount_token1 = config.amount_token1;
+    static amount_token1_in_eth = config.amount_token1_in_eth;
     static network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
     static txcost_gas_price_buff_in_wei = config.txcost_gas_price_buff_in_wei;
     static txcost_gas_limit = config.txcost_gas_limit;
@@ -17,19 +14,6 @@ export class Util {
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
-
-    static isValidToken1 = () => {
-      // USDC | DAI | WETH
-      const token1 = Util.Config.token1;
-      return token1 == "dai" || token1 == "usdc" || token1 == "weth";
-    };
-
-    static isValidToken2 = () => {
-      const token2 = Util.Config.token2;
-      return (
-        token2 == "eth" || token2 == "bat" || token2 == "knc" || token2 == "lend" || token2 == "link" || token2 == "mkr" || token2 == "susd"
-      );
-    };
   };
 
   static Env = class {
@@ -40,6 +24,7 @@ export class Util {
 
   static Address = class {
     static Token1 = class {
+      static tokens = addresses.tokens.token1;
       // to checksum address
       static daiAddress = ethers.utils.getAddress(addresses.tokens.token1.dai);
       static wethAddress = ethers.utils.getAddress(addresses.tokens.token1.weth);
@@ -52,7 +37,7 @@ export class Util {
           case "weth":
             return new Token("weth", this.wethAddress);
           case "usdc":
-            return new Token("usdc", this.usdcAddress, 6); // usdc has 6 decimals
+            return new Token("usdc", this.usdcAddress);
           default:
             return Token.InvalidToken;
         }
@@ -60,6 +45,8 @@ export class Util {
     };
 
     static Token2 = class {
+      static tokens = addresses.tokens.token2;
+      // to checksum address
       static ethAddress = ethers.utils.getAddress(addresses.tokens.token2.eth);
       static kncAddress = ethers.utils.getAddress(addresses.tokens.token2.knc);
       static lendAddress = ethers.utils.getAddress(addresses.tokens.token2.lend);
@@ -96,9 +83,16 @@ export class Util {
   static sleep = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
+
+  static etherToWei = (eth: string | number) => {
+    eth = eth.toString();
+    return ethers.utils.parseEther(eth);
+  };
+
+  static weiToEther = ethers.utils.formatEther;
 }
 
 export class Token {
-  constructor(public name: string, public address: string, public decimals: number = 18) {}
-  static InvalidToken = new Token("NA", "", -1);
+  constructor(public name: string, public address: string) {}
+  static InvalidToken = new Token("NA", "");
 }

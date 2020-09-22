@@ -13,12 +13,7 @@ export class Price {
   constructor(public buy: number, public sell: number) {}
 
   // fetch uniswap buy / sell rate
-  static FetchUniswapRates = async (
-    token1: TokenConfig,
-    token2: TokenConfig,
-    amount_token1 = Util.Config.amount_token1,
-    retry = 0
-  ): Promise<Price> => {
+  static FetchUniswapRates = async (token1: TokenConfig, token2: TokenConfig, amount_token1: number, retry = 0): Promise<Price> => {
     if (retry > maxRetry) {
       console.log(chalk.red("⚠ Failed to fetch uniswap price! Please check you network"));
       return new Price(0, 0);
@@ -35,7 +30,11 @@ export class Price {
     const tokenSearchInputSel = "#token-search-input";
 
     try {
-      await page.goto("https://app.uniswap.org/#/swap");
+      await page.goto("https://app.uniswap.org/#/swap", {waitUntil: "networkidle0"});
+
+      // await page.waitFor(3000);
+      // await page.screenshot({path: "screenshots/uniswap1.png"});
+
       // wait for dom ready
       await page.waitForFunction('document.querySelectorAll("#swap-page svg").length == 3');
 
@@ -51,7 +50,7 @@ export class Price {
       await page.keyboard.type(amount_token1.toString(), delay);
 
       // 2. select input currency
-      await inputCurrencyBtn.click();
+      await inputCurrencyBtn.click(delay);
       await page.waitForSelector(tokenSearchInputSel);
       await page.click(tokenSearchInputSel);
       await page.keyboard.type(token1.name, delay);
@@ -59,7 +58,7 @@ export class Price {
 
       // 3. select output currency
       await page.waitForFunction('document.querySelectorAll("#swap-page svg").length == 3');
-      await outputCurrencyBtn.click();
+      await outputCurrencyBtn.click(delay);
       await page.waitForSelector(tokenSearchInputSel);
       await page.click(tokenSearchInputSel);
       await page.keyboard.type(token2.name, delay);
@@ -72,7 +71,7 @@ export class Price {
       const buyPrice = await page.evaluate((x) => x.value, outputFieldHandle);
 
       // 5. swap it
-      await swapCurrencyBtn.click();
+      await swapCurrencyBtn.click(delay);
 
       // 6. get buy price
       await page.waitForFunction('document.querySelector("#swap-currency-output .token-amount-input").value > 0');
@@ -83,6 +82,7 @@ export class Price {
       browser.close();
       return new Price(parseFloat(buyPrice), parseFloat(sellPrice));
     } catch (e) {
+      browser.close();
       // retry
       await Util.sleep(1000);
       return Price.FetchUniswapRates(token1, token2, amount_token1, ++retry);
@@ -90,16 +90,12 @@ export class Price {
   };
 
   // fetch kyber buy / sell rate
-  static FetchKyberRates = async (
-    token1Address: string,
-    token2Address: string,
-    amount_token1 = Util.Config.amount_token1
-  ): Promise<Price> => {
+  static FetchKyberRates = async (token1Address: string, token2Address: string, amount_token1: number): Promise<Price> => {
     const [buy, sell] = await Promise.all([
       Price.fetchKyberPriceByAction(Action.Buy, token1Address, token2Address, amount_token1),
       Price.fetchKyberPriceByAction(Action.Sell, token1Address, token2Address, amount_token1),
     ]);
-    return new Price(buy, sell);
+    return new Price(parseFloat(buy), parseFloat(sell));
   };
 
   // private function to fetch kyber buy / sell rate
@@ -109,12 +105,12 @@ export class Price {
     token2Address: string,
     amount_token1: number,
     platformFee = 0
-  ): Promise<number> => {
+  ): Promise<string> => {
     const fetch = isNode ? nodeFetch : window.fetch;
     const endpoint = `https://api.kyber.network/quote_amount?base=${token1Address}&quote=${token2Address}&base_amount=${amount_token1}&type=${type}&platformFee=${platformFee}`;
     const response = await fetch(endpoint);
     const result = await response.json();
-    return result.data / amount_token1;
+    return result.data;
   };
 
   static fetchKyberTokenPairRate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
