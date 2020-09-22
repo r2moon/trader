@@ -92,6 +92,10 @@ export class Util {
 
     static soloMarginAddress = ethers.utils.getAddress(addresses.dydx.solo);
   };
+
+  static sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
 }
 
 export class Token {

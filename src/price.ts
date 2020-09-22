@@ -1,14 +1,13 @@
 import isNode from "detect-node";
 import nodeFetch from "node-fetch";
 import {Util, Token as TokenConfig} from "./util";
-import {ChainId, Token, Route, Fetcher, WETH, Trade, TokenAmount, TradeType} from "@uniswap/sdk";
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import addresses from "../addresses";
-import chalk from "chalk";
 import puppeteer from "puppeteer";
+import chalk from "chalk";
 
-const ethAddress = Util.Address.Token2.ethAddress;
+const maxRetry = 3;
 
 export class Price {
   constructor(public buy: number, public sell: number) {}
@@ -17,20 +16,25 @@ export class Price {
   static FetchUniswapRates = async (
     token1: TokenConfig,
     token2: TokenConfig,
-    amount_token1 = Util.Config.amount_token1
+    amount_token1 = Util.Config.amount_token1,
+    retry = 0
   ): Promise<Price> => {
+    if (retry > maxRetry) {
+      console.log(chalk.red("⚠ Failed to fetch uniswap price! Please check you network"));
+      return new Price(0, 0);
+    }
+
+    // we use puppeteer to scrape the price data instead of calling uniswap sdk fetcher
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    page.setDefaultTimeout(5000);
+
+    const swapCurrencyInputSel = "#swap-currency-input .token-amount-input";
+    const swapCurrencyOutputSel = "#swap-currency-output .token-amount-input";
+    const svgIconsSel = "#swap-page svg";
+    const tokenSearchInputSel = "#token-search-input";
+
     try {
-      // we use puppeteer to scrape the price data instead of calling uniswap sdk fetcher
-      const browser = await puppeteer.launch();
-      const page = await browser.newPage();
-
-      page.setDefaultTimeout(5000);
-
-      const swapCurrencyInputSel = "#swap-currency-input .token-amount-input";
-      const swapCurrencyOutputSel = "#swap-currency-output .token-amount-input";
-      const svgIconsSel = "#swap-page svg";
-      const tokenSearchInputSel = "#token-search-input";
-
       await page.goto("https://app.uniswap.org/#/swap");
       // wait for dom ready
       await page.waitForFunction('document.querySelectorAll("#swap-page svg").length == 3');
@@ -76,10 +80,12 @@ export class Price {
       let inputFieldHandle = await page.$(swapCurrencyInputSel);
       const sellPrice = await page.evaluate((x) => x.value, inputFieldHandle);
 
+      browser.close();
       return new Price(parseFloat(buyPrice), parseFloat(sellPrice));
     } catch (e) {
-      console.error(chalk.red("FetchUniswapRates error. Please retry (will try to fix it asap)"));
-      return new Price(0, 0);
+      // retry
+      await Util.sleep(1000);
+      return Price.FetchUniswapRates(token1, token2, amount_token1, ++retry);
     }
   };
 
@@ -113,7 +119,7 @@ export class Price {
 
   static fetchKyberTokenPairRate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
-    const expectedRate = (await kyber.getExpectedRate(token1Address, token2Address, 1e6)).expectedRate;
+    const expectedRate = (await kyber.getExpectedRate(token1Address, token2Address, 1e8)).expectedRate;
     return parseFloat(ethers.utils.formatEther(expectedRate));
   };
 }

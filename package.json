@@ -23,7 +23,6 @@
     "@babel/preset-typescript": "^7.10.4",
     "@studydefi/money-legos": "^2.3.5",
     "@truffle/hdwallet-provider": "^1.0.35",
-    "@uniswap/sdk": "^3.0.3-beta.1",
     "chalk": "^4.1.0",
     "console.table": "^0.10.0",
     "csv-writer": "^1.6.0",

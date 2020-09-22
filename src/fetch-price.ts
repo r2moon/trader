@@ -14,28 +14,32 @@ const rl = readline.createInterface({
 const amount_token1 = 1;
 
 const main = async () => {
-  rl.question(chalk.yellow("* Select input token (dai | usdc | weth)\n"), async function (token1) {
-    rl.question(chalk.yellow("Select output token (eth | bat | knc | lend | link | mkr | susd)\n"), async function (token2) {
+  rl.question(chalk.yellow("* Select input token (dai | usdc | weth | * for all)\n"), async function (token1) {
+    console.log(chalk.yellow(`👀 token1 is ${token1 == "*" ? "ALL" : token1}\n`));
+
+    rl.question(chalk.yellow("* Select output token (eth | bat | knc | lend | link | mkr | susd | * for all)\n"), async function (token2) {
+      console.log(chalk.yellow(`👀 token2 is ${token2 == "*" ? "ALL" : token2}\n`));
+
+      console.log(`🚀 Loading ... \n`);
+
       rl.close();
 
-      const token1List = Object.keys(addresses.tokens.token1).filter((x) => token1 == x);
-      const token2List = Object.keys(addresses.tokens.token2).filter((x) => token2 == x);
-
-      console.log(`input token is ${token1}`);
-      console.log(`output token is ${token2}`);
+      const token1List = Object.keys(addresses.tokens.token1).filter((x) => token1 == x || token1 == "*");
+      const token2List = Object.keys(addresses.tokens.token2).filter((x) => token2 == x || token2 == "*");
 
       if (token1 == "weth" && token2 == "eth") {
-        console.log("this pair is not supported");
+        console.log(`${token1}/${token2} pair is not supported. Skipping`);
         return;
       }
 
-      const records: string[] = [];
       for (let token1 of token1List) {
         for (let token2 of token2List) {
           if (token1 == "weth" && token2 == "eth") continue;
-          fetchPrice(token1, token2);
+          await fetchPrice(token1, token2);
         }
       }
+
+      console.log("🚀 done");
     });
   });
 };
