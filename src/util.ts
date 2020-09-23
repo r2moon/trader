@@ -30,14 +30,14 @@ export class Util {
       static wethAddress = ethers.utils.getAddress(addresses.tokens.token1.weth);
       static usdcAddress = ethers.utils.getAddress(addresses.tokens.token1.usdc);
 
-      static resolveToken(token: string): Token {
+      static resolveToken(token: string, amount?: number): Token {
         switch (token) {
           case "dai":
-            return new Token("dai", this.daiAddress);
+            return new Token("dai", this.daiAddress, amount);
           case "weth":
-            return new Token("weth", this.wethAddress);
+            return new Token("weth", this.wethAddress, amount);
           case "usdc":
-            return new Token("usdc", this.usdcAddress);
+            return new Token("usdc", this.usdcAddress, amount);
           default:
             return Token.InvalidToken;
         }
@@ -55,22 +55,22 @@ export class Util {
       static susdAddress = ethers.utils.getAddress(addresses.tokens.token2.susd);
       static batAddress = ethers.utils.getAddress(addresses.tokens.token2.bat);
 
-      static resolveToken(token: string): Token {
+      static resolveToken(token: string, amount?: number): Token {
         switch (token) {
           case "knc":
-            return new Token("knc", this.kncAddress);
+            return new Token("knc", this.kncAddress, amount);
           case "lend":
-            return new Token("lend", this.lendAddress);
+            return new Token("lend", this.lendAddress, amount);
           case "link":
-            return new Token("link", this.linkAddress);
+            return new Token("link", this.linkAddress, amount);
           case "mkr":
-            return new Token("mkr", this.mkrAddress);
+            return new Token("mkr", this.mkrAddress, amount);
           case "susd":
-            return new Token("susd", this.susdAddress);
+            return new Token("susd", this.susdAddress, amount);
           case "bat":
-            return new Token("bat", this.batAddress);
+            return new Token("bat", this.batAddress, amount);
           case "eth":
-            return new Token("eth", this.ethAddress);
+            return new Token("eth", this.ethAddress, amount);
           default:
             return Token.InvalidToken;
         }
@@ -93,6 +93,6 @@ export class Util {
 }
 
 export class Token {
-  constructor(public name: string, public address: string) {}
-  static InvalidToken = new Token("NA", "");
+  constructor(public name: string, public address: string, public amount?: number) {}
+  static InvalidToken = new Token("NA", "", -1);
 }

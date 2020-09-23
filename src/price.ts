@@ -4,98 +4,146 @@ import {Util, Token as TokenConfig} from "./util";
 import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import addresses from "../addresses";
-import puppeteer from "puppeteer";
+import puppeteer, {ElementHandle, Page} from "puppeteer";
 import chalk from "chalk";
 
 const maxRetry = 3;
 
 export class Price {
-  constructor(public buy: number, public sell: number) {}
+  constructor(public token1: string, public token2: string, public buy: number, public sell: number) {}
 
-  // fetch uniswap buy / sell rate
-  static FetchUniswapRates = async (token1: TokenConfig, token2: TokenConfig, amount_token1: number, retry = 0): Promise<Price> => {
-    if (retry > maxRetry) {
-      console.log(chalk.red("⚠ Failed to fetch uniswap price! Please check you network"));
-      return new Price(0, 0);
-    }
+  static FetchUniswapRates = async (token1List: TokenConfig[], token2List: TokenConfig[], retry = 0): Promise<Price[]> => {
+    const prices: Price[] = [];
+
+    const svgIconsSel = "#swap-page svg";
 
     // we use puppeteer to scrape the price data instead of calling uniswap sdk fetcher
     const browser = await puppeteer.launch();
+    // we can connect to local chrome to make the bootstrap the performance a littel bit
+    // const browser = await puppeteer.connect({browserURL: "http://localhost:9222"});
     const page = await browser.newPage();
     page.setDefaultTimeout(5000);
+
+    await page.goto("https://app.uniswap.org/#/swap", {waitUntil: "domcontentloaded"});
+
+    await page.waitForFunction((selector) => document.querySelectorAll(selector).length == 3, {}, svgIconsSel);
+
+    let buttons = await page.$$("#swap-page svg");
+    const inputCurrencyBtn = buttons[0];
+    const swapCurrencyBtn = buttons[1];
+    const outputCurrencyBtn = buttons[2];
+
+    for (let token1 of token1List) {
+      for (let token2 of token2List) {
+        if (token1.name == "weth" && token2.name == "eth") continue;
+        prices.push(await Price.FetchUniswapRate(token1, token2, page, inputCurrencyBtn, outputCurrencyBtn, swapCurrencyBtn));
+      }
+    }
+
+    browser.close();
+    return prices;
+  };
+
+  // fetch kyber buy / sell rate
+  static FetchKyberRates = async (token1List: TokenConfig[], token2List: TokenConfig[]): Promise<Price[]> => {
+    const prices: Price[] = [];
+    for (let token1 of token1List) {
+      for (let token2 of token2List) {
+        if (token1.name == "weth" && token2.name == "eth") continue;
+        prices.push(await Price.FetchKyberRate(token1, token2));
+      }
+    }
+    return prices;
+  };
+
+  // fetch uniswap buy / sell rate
+  private static FetchUniswapRate = async (
+    token1: TokenConfig,
+    token2: TokenConfig,
+    page: Page,
+    inputCurrencyBtn: ElementHandle<Element>,
+    outputCurrencyBtn: ElementHandle<Element>,
+    swapCurrencyBtn: ElementHandle<Element>,
+    retry = 0
+  ): Promise<Price> => {
+    if (retry > maxRetry) {
+      console.log(chalk.red(`⚠ Failed to fetch uniswap ${token1.name} / ${token2.name} price`));
+      return new Price(token1.name, token2.name, 0, 0);
+    }
 
     const swapCurrencyInputSel = "#swap-currency-input .token-amount-input";
     const swapCurrencyOutputSel = "#swap-currency-output .token-amount-input";
     const svgIconsSel = "#swap-page svg";
     const tokenSearchInputSel = "#token-search-input";
+    const delay = {delay: 300}; // input like a human
 
     try {
-      await page.goto("https://app.uniswap.org/#/swap", {waitUntil: "networkidle0"});
-
-      // await page.waitFor(3000);
-      // await page.screenshot({path: "screenshots/uniswap1.png"});
-
       // wait for dom ready
-      await page.waitForFunction('document.querySelectorAll("#swap-page svg").length == 3');
-
-      let svgItems = await page.$$(svgIconsSel);
-      const inputCurrencyBtn = svgItems[0];
-      const swapCurrencyBtn = svgItems[1];
-      const outputCurrencyBtn = svgItems[2];
-
-      const delay = {delay: 100}; // input like a human
+      await page.waitForSelector(svgIconsSel);
 
       // 1. set output currency amount
-      await page.click(swapCurrencyInputSel);
-      await page.keyboard.type(amount_token1.toString(), delay);
+      await clear(page, swapCurrencyInputSel);
+      await page.click(swapCurrencyInputSel, delay);
+      await page.keyboard.type((token1.amount ?? 1).toString(), delay);
 
       // 2. select input currency
       await inputCurrencyBtn.click(delay);
       await page.waitForSelector(tokenSearchInputSel);
-      await page.click(tokenSearchInputSel);
+
+      await clear(page, tokenSearchInputSel);
+      await page.click(tokenSearchInputSel, delay);
       await page.keyboard.type(token1.name, delay);
       await page.keyboard.press(String.fromCharCode(13), delay); // press enter key
 
       // 3. select output currency
-      await page.waitForFunction('document.querySelectorAll("#swap-page svg").length == 3');
+      await page.waitForSelector(svgIconsSel);
+
       await outputCurrencyBtn.click(delay);
       await page.waitForSelector(tokenSearchInputSel);
-      await page.click(tokenSearchInputSel);
+      await clear(page, tokenSearchInputSel);
+      await page.click(tokenSearchInputSel, delay);
       await page.keyboard.type(token2.name, delay);
       await page.keyboard.press(String.fromCharCode(13), delay);
 
-      // 4. get sell price
-      await page.waitForFunction('document.querySelector("#swap-currency-output .token-amount-input").value > 0');
-      await page.screenshot({path: "screenshots/uniswap1.png"});
+      // 4. get buy price
+      await page.waitForFunction((selector) => document.querySelector(selector).value > 0, {}, swapCurrencyOutputSel);
+
       let outputFieldHandle = await page.$(swapCurrencyOutputSel);
       const buyPrice = await page.evaluate((x) => x.value, outputFieldHandle);
 
       // 5. swap it
       await swapCurrencyBtn.click(delay);
 
-      // 6. get buy price
-      await page.waitForFunction('document.querySelector("#swap-currency-output .token-amount-input").value > 0');
-      await page.screenshot({path: "screenshots/uniswap2.png"});
+      // 6. get sell price
+      await page.waitForFunction((selector) => document.querySelector(selector).value > 0, {}, swapCurrencyInputSel);
+
       let inputFieldHandle = await page.$(swapCurrencyInputSel);
       const sellPrice = await page.evaluate((x) => x.value, inputFieldHandle);
 
-      browser.close();
-      return new Price(parseFloat(buyPrice), parseFloat(sellPrice));
+      // 7. swap back
+      await swapCurrencyBtn.click(delay);
+
+      // 8. done
+      return new Price(token1.name, token2.name, parseFloat(buyPrice), parseFloat(sellPrice));
     } catch (e) {
-      browser.close();
-      // retry
-      await Util.sleep(1000);
-      return Price.FetchUniswapRates(token1, token2, amount_token1, ++retry);
+      console.log(`You failed xxx!`, e);
+      await Util.sleep(500);
+      return Price.FetchUniswapRate(token1, token2, page, inputCurrencyBtn, outputCurrencyBtn, swapCurrencyBtn, ++retry);
     }
   };
 
-  // fetch kyber buy / sell rate
-  static FetchKyberRates = async (token1Address: string, token2Address: string, amount_token1: number): Promise<Price> => {
+  // fetch single pair kyber buy / sell rate
+  private static FetchKyberRate = async (token1: TokenConfig, token2: TokenConfig): Promise<Price> => {
+    const token1Address = token1.address;
+    const token2Address = token2.address;
+    const amount_token1 = token1.amount ?? 1;
+
     const [buy, sell] = await Promise.all([
       Price.fetchKyberPriceByAction(Action.Buy, token1Address, token2Address, amount_token1),
       Price.fetchKyberPriceByAction(Action.Sell, token1Address, token2Address, amount_token1),
     ]);
-    return new Price(parseFloat(buy), parseFloat(sell));
+
+    return new Price(token1.name, token2.name, parseFloat(buy), parseFloat(sell));
   };
 
   // private function to fetch kyber buy / sell rate
@@ -123,4 +171,11 @@ export class Price {
 export enum Action {
   Sell = "sell",
   Buy = "buy",
+}
+
+// puppeteer clear input hack
+async function clear(page: Page, selector: any) {
+  await page.evaluate((selector) => {
+    document.querySelector(selector).value = "";
+  }, selector);
 }
