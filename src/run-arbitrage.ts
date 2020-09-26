@@ -10,22 +10,27 @@ import {Price} from "./price";
 import config from "../config.json";
 import moment from "moment-timezone";
 
+const dryrun = Util.Config.dryrun;
+if (dryrun) {
+  console.log(chalk.yellowBright("ℹ You are running on DRY RUN mode\n"));
+}
+
 // read infura uri and private key from .env
 const infuraUri = Util.Env.infuraUri;
 if (!infuraUri) {
-  console.log(chalk.red("Must assign INFURA_URI"));
+  console.log(chalk.red("ℹ Must assign INFURA_URI"));
   process.exit();
 }
 
 const privKey = Util.Env.privKey;
 if (!privKey) {
-  console.log(chalk.red("Must assign PRIVATE_KEY"));
+  console.log(chalk.red("ℹ Must assign PRIVATE_KEY"));
   process.exit();
 }
 
 const amount_token1_in_eth = Util.Config.amount_token1_in_eth;
 if (!amount_token1_in_eth) {
-  console.log(chalk.red("Must assign amount_token1_in_eth for swap"));
+  console.log(chalk.red("ℹ Must assign amount_token1_in_eth for swap"));
   process.exit();
 }
 
@@ -49,26 +54,26 @@ let wait_blocks_arr: Array<number> = [];
 
 const token1 = Util.Config.token1;
 if (!token1) {
-  console.log(chalk.red("Must assign token1 for swap"));
+  console.log(chalk.red("ℹ Must assign token1 for swap"));
   process.exit();
 }
 if (!Util.Config.isValidToken1()) {
-  console.log(chalk.red("Token1 is unsupported. Assign one of the following tokens: dai | usdc | weth"));
+  console.log(chalk.red("ℹ Token1 is unsupported. Assign one of the following tokens: dai | usdc | weth"));
   process.exit();
 }
 
 const token2 = Util.Config.token2;
 if (!token2) {
-  console.log(chalk.red("Must assign token2 for swap"));
+  console.log(chalk.red("ℹ Must assign token2 for swap"));
   process.exit();
 }
 if (!Util.Config.isValidToken2()) {
-  console.log(chalk.red("Token2 is unsupported. Assign one of the following tokens: eth | bat | knc | lend | link | mkr | susd"));
+  console.log(chalk.red("ℹ Token2 is unsupported. Assign one of the following tokens: eth | bat | knc | lend | link | mkr | susd"));
   process.exit();
 }
 
 const main = async () => {
-  console.log(`👀 Token1 is ${token1}`);
+  console.log(`👀 Token1 is ${token1}\n`);
   console.log(`👀 Token2 is ${token2}\n`);
 
   for (let i = 0; ; i++) {
@@ -120,7 +125,8 @@ const runArbitrage = async (token1: string, token2: string, index: number) => {
     return;
   }
 
-  if (kyberRate.buy < uniswapRate.sell || uniswapRate.buy < kyberRate.sell) {
+  // if dryrun we always trigger it
+  if (dryrun || kyberRate.buy < uniswapRate.sell || uniswapRate.buy < kyberRate.sell) {
     // prettier-ignore
     const direction =
           kyberRate.buy < uniswapRate.sell
@@ -173,8 +179,8 @@ const runArbitrage = async (token1: string, token2: string, index: number) => {
     const profit = gross - cost;
     console.log(chalk.yellow(`👀 profit is ${profit} USD\n`));
 
-    if (profit >= profit_threshold) {
-      if (!wait_blocks_arr.length) {
+    if (dryrun || profit >= profit_threshold) {
+      if (!dryrun && !wait_blocks_arr.length) {
         // wait 10 loops (start from next loop)
         wait_blocks_arr = Array.from(Array(wait_blocks), (_, i) => i + index + 1);
       }
@@ -197,6 +203,9 @@ const runArbitrage = async (token1: string, token2: string, index: number) => {
       const options = {
         gasLimit: txcost_gas_limit,
       };
+
+      // if dryrun we don't call smartcontract
+      if (dryrun) return;
 
       try {
         const amount_token1_in_wei = Util.etherToWei(amount_token1_in_eth);

@@ -6,6 +6,7 @@ import {ethers} from "ethers";
 
 export class Util {
   static Config = class {
+    static dryrun = config.dryrun;
     static token1 = config.token1.toLowerCase();
     static token2 = config.token2.toLowerCase();
     static amount_token1_in_eth = config.amount_token1_in_eth;

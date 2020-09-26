@@ -1,4 +1,5 @@
 {
+  "dryrun": true,
   "token1": "dai",
   "token2": "eth",
   "amount_token1_in_eth": 10,
