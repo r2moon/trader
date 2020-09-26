@@ -1,343 +1,352 @@
-// import fs from "fs";
-// import chalk from "chalk";
+import fs from "fs";
+import chalk from "chalk";
+import {ethers} from "ethers";
+import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
+import FlashloanContract from "../build/contracts/Flashloan.json";
+import {Flashloan} from "../types/ethers-contracts/Flashloan";
+import {MongoClient} from "mongodb";
+import {Util} from "./util";
+import {Price} from "./price";
+import config from "../config.json";
+import moment from "moment-timezone";
 
-// import {ethers} from "ethers";
+// read infura uri and private key from .env
+const infuraUri = Util.Env.infuraUri;
+if (!infuraUri) {
+  console.log(chalk.red("Must assign INFURA_URI"));
+  process.exit();
+}
 
-// import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
-// import FlashloanContract from "../build/contracts/Flashloan.json";
+const privKey = Util.Env.privKey;
+if (!privKey) {
+  console.log(chalk.red("Must assign PRIVATE_KEY"));
+  process.exit();
+}
 
-// import {Flashloan} from "../types/ethers-contracts/Flashloan";
-// import {MongoClient} from "mongodb";
-// import {Util} from "./util";
-// import {Price} from "./price";
-// import config from "../config.json";
-// import moment from "moment-timezone";
+const amount_token1_in_eth = Util.Config.amount_token1_in_eth;
+if (!amount_token1_in_eth) {
+  console.log(chalk.red("Must assign amount_token1_in_eth for swap"));
+  process.exit();
+}
 
-// // read infura uri and private key from .env
-// const infuraUri = Util.Env.infuraUri;
-// if (!infuraUri) {
-//   console.log(chalk.red("Must assign INFURA_URI"));
-//   process.exit();
-// }
+// init provider and wallet
+const provider = new ethers.providers.JsonRpcProvider(infuraUri);
+const wallet = new ethers.Wallet(privKey, provider);
 
-// const privKey = Util.Env.privKey;
-// if (!privKey) {
-//   console.log(chalk.red("Must assign PRIVATE_KEY"));
-//   process.exit();
-// }
+const network = Util.Config.network;
+const txcost_gas_limit = Util.Config.txcost_gas_limit;
+const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
+const kyber_service_fee = Util.Config.kyber_service_fee;
+const uniswap_service_fee = Util.Config.uniswap_service_fee;
+const profit_threshold = Util.Config.profit_threshold;
 
-// const amount_token1_in_eth = Util.Config.amount_token1_in_eth;
-// if (!amount_token1_in_eth) {
-//   console.log(chalk.red("Must assign amount_token1_in_eth for swap"));
-//   process.exit();
-// }
+const soloMarginAddress = Util.Address.soloMarginAddress;
+const ethAddress = Util.Address.Token2.ethAddress;
 
-// // init provider and wallet
-// // https://docs.ethers.io/v5/api/providers/other/#WebSocketProvider
-// const provider = new ethers.providers.WebSocketProvider(infuraUri);
-// const wallet = new ethers.Wallet(privKey, provider);
+// define how many blocks to wait after an arb is identified and a trade is made
+const wait_blocks = Util.Config.wait_blocks;
+let wait_blocks_arr: Array<number> = [];
 
-// const network = Util.Config.network;
-// const txcost_gas_limit = Util.Config.txcost_gas_limit;
-// const txcost_gas_price_buff_in_wei = Util.Config.txcost_gas_price_buff_in_wei;
-// const kyber_service_fee = Util.Config.kyber_service_fee;
-// const uniswap_service_fee = Util.Config.uniswap_service_fee;
-// const profit_threshold = Util.Config.profit_threshold;
+const token1 = Util.Config.token1;
+if (!token1) {
+  console.log(chalk.red("Must assign token1 for swap"));
+  process.exit();
+}
+if (!Util.Config.isValidToken1()) {
+  console.log(chalk.red("Token1 is unsupported. Assign one of the following tokens: dai | usdc | weth"));
+  process.exit();
+}
 
-// const token1List = Object.keys(Util.Address.Token1.tokens);
-// const token2List = Object.keys(Util.Address.Token2.tokens);
-// const soloMarginAddress = Util.Address.soloMarginAddress;
-// const ethAddress = Util.Address.Token2.ethAddress;
+const token2 = Util.Config.token2;
+if (!token2) {
+  console.log(chalk.red("Must assign token2 for swap"));
+  process.exit();
+}
+if (!Util.Config.isValidToken2()) {
+  console.log(chalk.red("Token2 is unsupported. Assign one of the following tokens: eth | bat | knc | lend | link | mkr | susd"));
+  process.exit();
+}
 
-// // define how many blocks to wait after an arb is identified and a trade is made
-// const wait_blocks = Util.Config.wait_blocks;
-// let wait_blocks_arr: Array<number> = [];
+const main = async () => {
+  console.log(`👀 Token1 is ${token1}`);
+  console.log(`👀 Token2 is ${token2}\n`);
 
-// const main = async () => {
-//   const networkId = network.network_id;
-//   console.log(`Network ID is ${networkId}`);
+  for (let i = 0; ; i++) {
+    await runArbitrage(token1, token2, i);
+  }
+};
 
-//   // https://docs.ethers.io/v5/api/providers/provider/
-//   provider.on("block", async (block) => {
-//     console.log(`New block received. Block number: ${block}`);
+const runArbitrage = async (token1: string, token2: string, index: number) => {
+  const networkId = network.network_id;
+  const resolvedToken1 = Util.Address.Token1.resolveToken(token1);
+  const resolvedToken2 = Util.Address.Token2.resolveToken(token2);
 
-//     for (let token1 of token1List) {
-//       for (let token2 of token2List) {
-//         console.log(chalk.yellow(`>>>>>>>>>>>>>>>>> start >>>>>>>>>>>>>>>>>>>\n`));
-//         await arbitrage(token1, token2, block);
-//         console.log(chalk.blue(`<<<<<<<<<<<<<<<<<< end <<<<<<<<<<<<<<<<<<\n`));
-//       }
+  const token1Address = resolvedToken1.address;
+  const token2Address = resolvedToken2.address;
 
-//       // // token2 / token1 rate
-//       // const tokenPairRate = 1 / (await Price.fetchKyberTokenPairRate(token1Address, token2Address, provider));
-//       // console.log(chalk.green(`${token2}/${token1} rate: ${tokenPairRate}`));
+  const ethToken1Rate = await Price.fetchKyberTokenPairRate(ethAddress, token1Address, provider);
+  const amount_token1 = amount_token1_in_eth * ethToken1Rate;
+  console.log(`👀 ${token1} amount: ${amount_token1}\n`);
 
-//       // const token1EthRate = 1 / (await Price.fetchKyberTokenPairRate(token1Address, ethAddress, provider));
+  resolvedToken1.amount = amount_token1;
 
-//       // const amount_token1 = amount_token2 * tokenPairRate;
-//       // const amount_token1_wei = ethers.utils.parseEther(amount_token1.toString());
-//       // // fetch kyber buy / sell rates
-//       // const kyberRates = await Price.FetchKyberRates(token1Address, token2Address, amount_token2);
-//       // console.log(chalk.green(`Kyber ${token2}/${token1}`));
-//       // console.log(kyberRates);
+  const [kyberRates, uniswapRates] = await Promise.all([
+    Price.FetchKyberRates([resolvedToken1], [resolvedToken2]),
+    Price.FetchUniswapRates([resolvedToken1], [resolvedToken2]),
+  ]);
 
-//       // const uniswapRates = await Price.FetchUniswapRates(provider, tokenPairRate, token1Config, token2Config);
-//       // console.log(chalk.blue(`Uniswap ${token2}/${token1}`));
-//       // console.log(uniswapRates);
+  const kyberRate = kyberRates[0];
+  const uniswapRate = uniswapRates[0];
 
-//       // saveBlockInfo(block, kyberRates, uniswapRates);
+  console.table([
+    {
+      "Token Pair": `${token1}/${token2}`,
+      "Input Token Amount In ETH": `${amount_token1_in_eth}`,
+      "Input Token Amount": `${amount_token1} ${token1}`,
+      "Kyber Buy": kyberRate.buy,
+      "Kyber Sell": kyberRate.sell,
+      "Uniswap Buy": uniswapRate.buy,
+      "Uniswap Sell": uniswapRate.sell,
+      Timestamp: moment().tz("Asia/Tokyo").format(),
+    },
+  ]);
 
-//       // // skip block if an arb was just identified
-//       // if (wait_blocks_arr.includes(block)) {
-//       //   wait_blocks_arr = wait_blocks_arr.filter((i) => i != block);
-//       //   console.log(`Skip block: ${block}`);
-//       //   return;
-//       // }
+  saveInfo(kyberRate, uniswapRate);
 
-//       // if (kyberRates.buy < uniswapRates.sell || uniswapRates.buy < kyberRates.sell) {
-//       //   // prettier-ignore
-//       //   const direction =
-//       //     kyberRates.buy < uniswapRates.sell
-//       //       ? token2 == "eth"
-//       //         ? Direction.KYBER_TO_UNISWAP
-//       //         : Direction.KYBER_TOKEN_UNISWAP
-//       //       : token2 == "eth"
-//       //         ? Direction.UNISWAP_TO_KYBER
-//       //         : Direction.UNISWAP_TOKEN_KYBER;
+  // skip this loop if an arb was just identified
+  if (wait_blocks_arr.includes(index)) {
+    wait_blocks_arr = wait_blocks_arr.filter((i) => i != index);
+    console.log(`Skip loop: ${index}`);
+    return;
+  }
 
-//       //   const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
-//       //   const avgGasPrice = await provider.getGasPrice();
+  if (kyberRate.buy < uniswapRate.sell || uniswapRate.buy < kyberRate.sell) {
+    // prettier-ignore
+    const direction =
+          kyberRate.buy < uniswapRate.sell
+            ? token2 == "eth"
+              ? Direction.KYBER_TO_UNISWAP
+              : Direction.KYBER_TOKEN_UNISWAP
+            : token2 == "eth"
+              ? Direction.UNISWAP_TO_KYBER
+              : Direction.UNISWAP_TOKEN_KYBER;
 
-//       //   const [gasPrice, gasLimit] = await Promise.all([
-//       //     // avg gas price + 10Gwei set in config.json
-//       //     avgGasPrice.add(txcost_gas_price_buff_in_wei),
-//       //     txcost_gas_limit,
-//       //   ]);
+    console.log(`direction is ${resolveDirection(direction)}`);
 
-//       //   console.log(`gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
+    const avgGasPrice = await provider.getGasPrice();
 
-//       //   const txCost = gasPrice.mul(gasLimit);
-//       //   console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)`);
+    const [gasPrice, gasLimit] = await Promise.all([
+      // avg gas price + 10Gwei set in config.json
+      avgGasPrice.add(txcost_gas_price_buff_in_wei),
+      txcost_gas_limit,
+    ]);
 
-//       //   const unitGross =
-//       //     direction == (Direction.KYBER_TO_UNISWAP || Direction.KYBER_TOKEN_UNISWAP)
-//       //       ? uniswapRates.sell - kyberRates.buy
-//       //       : kyberRates.sell - uniswapRates.buy;
+    console.log(chalk.blue(`👀 gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`));
 
-//       //   const gross = amount_token2 * unitGross;
-//       //   console.log(`gross is ${gross} ${token1} (${(gross / token1EthRate) * ethPrice} USD)`);
+    const txCost = gasPrice.mul(gasLimit);
 
-//       //   const kyberServiceFee = ((amount_token1 * kyber_service_fee) / token1EthRate) * ethPrice;
-//       //   const uniswapServiceFee = ((amount_token1 * uniswap_service_fee) / token1EthRate) * ethPrice;
-//       //   console.log(`kyber service fee is ${kyberServiceFee} USD`);
-//       //   console.log(`uniswap service fee is ${uniswapServiceFee} USD`);
+    // eth price is just used to calc profit
+    const [ethPrice, token1EthRate, token2EthRate] = await Promise.all([
+      Price.fetchKyberTokenPairRate(ethAddress, Util.Address.Token1.daiAddress, provider),
+      Price.fetchKyberTokenPairRate(ethAddress, token1Address, provider),
+      Price.fetchKyberTokenPairRate(ethAddress, token2Address, provider),
+    ]);
 
-//       //   const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice + kyberServiceFee + uniswapServiceFee;
-//       //   console.log(`cost is ${cost} USD`);
+    console.log(`txCost is ${ethers.utils.formatEther(txCost)} ETH (${parseFloat(ethers.utils.formatEther(txCost)) * ethPrice} USD)\n`);
 
-//       //   const profit = gross - cost;
-//       //   console.log(`profit is ${profit} USD`);
+    // gross in token2
+    const gross =
+      direction == (Direction.KYBER_TO_UNISWAP || Direction.KYBER_TOKEN_UNISWAP)
+        ? uniswapRate.sell - kyberRate.buy
+        : kyberRate.sell - uniswapRate.buy;
 
-//       //   if (profit >= profit_threshold) {
-//       //     if (!wait_blocks_arr.length) {
-//       //       // wait 10 blocks (start from next block)
-//       //       wait_blocks_arr = Array.from(Array(wait_blocks), (_, i) => i + block + 1);
-//       //     }
+    console.log(chalk.yellow(`👀 gross is ${gross} ${token2} (${(gross / token2EthRate) * ethPrice} USD)\n`));
 
-//       //     const balance = await provider.getBalance(wallet.address);
-//       //     console.log(`wallet balance is ${ethers.utils.formatEther(balance)} ETH`);
+    const kyberServiceFee = ((amount_token1 * kyber_service_fee) / token1EthRate) * ethPrice;
+    const uniswapServiceFee = ((amount_token1 * uniswap_service_fee) / token1EthRate) * ethPrice;
+    console.log(chalk.yellow(`👀 Kyber service fee is ${amount_token1 * kyber_service_fee} ${token1} (${kyberServiceFee} USD)\n`));
+    console.log(chalk.yellow(`👀 Uniswap service fee is ${amount_token1 * uniswap_service_fee} ${token1} (${uniswapServiceFee} USD)\n`));
 
-//       //     // check wallet balance. Skip if not enough balance
-//       //     const insufficientBalance = balance.lte(txCost); // balance less than txCost
-//       //     if (insufficientBalance) {
-//       //       console.log(`Insufficient balance. Skip`);
-//       //       return;
-//       //     }
+    const cost = parseFloat(ethers.utils.formatEther(txCost)) * ethPrice + kyberServiceFee + uniswapServiceFee;
+    console.log(chalk.yellow(`👀 cost is ${cost} USD\n`));
 
-//       //     console.log(chalk.green("Arbitrage opportunity found!"));
-//       //     console.log(chalk.green(`Direction: ${resolveDirection(direction)}`));
-//       //     console.log(`Expected profit: ${profit} USD`);
+    const profit = gross - cost;
+    console.log(chalk.yellow(`👀 profit is ${profit} USD\n`));
 
-//       //     const record = `Time: ${new Date().toISOString()}, Block: ${block}, Direction: ${resolveDirection(direction)}, profit: ${profit}\n`;
-//       //     // save arbs to local file
-//       //     fs.appendFile("arbs.log", record, (err) => {
-//       //       if (err) console.log(err);
-//       //     });
+    if (profit >= profit_threshold) {
+      if (!wait_blocks_arr.length) {
+        // wait 10 loops (start from next loop)
+        wait_blocks_arr = Array.from(Array(wait_blocks), (_, i) => i + index + 1);
+      }
 
-//       //     const options = {
-//       //       gasPrice: avgGasPrice,
-//       //       gasLimit: txcost_gas_limit,
-//       //     };
+      const balance = await provider.getBalance(wallet.address);
+      // check wallet balance. Skip if not enough balance
+      const insufficientBalance = balance.lte(txCost); // balance less than txCost
+      if (insufficientBalance) {
+        console.log(chalk.magenta(`⚠ Insufficient balance. Skip`));
+        return;
+      }
 
-//       //     try {
-//       //       const tx = await flashloan.initateFlashLoan(
-//       //         soloMarginAddress,
-//       //         amount_token1_wei,
-//       //         token1Address,
-//       //         token2Address,
-//       //         direction,
-//       //         options
-//       //       );
-//       //       const recipt = await tx.wait();
-//       //       const txHash = recipt.transactionHash;
-//       //       console.log(`Transaction hash: ${txHash}`);
+      console.log(chalk.green("ℹ Arbitrage opportunity found!\n"));
+      console.log(chalk.green(`ℹ Direction: ${resolveDirection(direction)}\n`));
+      console.log(`Expected profit: ${profit} USD\n`);
 
-//       //       saveTransactionHash(txHash);
-//       //       saveFlashloanEventLog(flashloan, block);
-//       //     } catch (e) {
-//       //       console.log(`tx error!`);
-//       //       console.log(e);
-//       //     }
-//       //   }
-//     }
-//   });
-// };
+      const record = {time: moment().tz("Asia/Tokyo").format(), direction: resolveDirection(direction), profit: profit};
+      saveArbInfo(record);
 
-// const arbitrage = async (token1: string, token2: string, block: number) => {
-//   const resolvedToken1 = Util.Address.Token1.resolveToken(token1);
-//   const resolvedToken2 = Util.Address.Token2.resolveToken(token2);
+      const options = {
+        gasLimit: txcost_gas_limit,
+      };
 
-//   const token1Address = resolvedToken1.address;
-//   const token2Address = resolvedToken2.address;
+      try {
+        const amount_token1_in_wei = Util.etherToWei(amount_token1_in_eth);
+        const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
+        const tx = await flashloan.initateFlashLoan(
+          soloMarginAddress,
+          amount_token1_in_wei,
+          token1Address,
+          token2Address,
+          direction,
+          options
+        );
+        const recipt = await tx.wait();
+        const txHash = recipt.transactionHash;
+        console.log(`Transaction hash: ${txHash}`);
 
-//   // // eth price is just used to calc profit. We use dai to get eth / usd rate
-//   // const ethPrice = await Price.fetchKyberTokenPairRate(ethAddress, Util.Address.Token1.daiAddress, provider);
+        saveTransactionHash(txHash);
+        saveFlashloanEventLog(flashloan);
+      } catch (e) {
+        console.log(`tx error!`);
+        console.log(e);
+        saveError(e);
+      }
+    }
+  }
+};
 
-//   const ethToken1Rate = await Price.fetchKyberTokenPairRate(ethAddress, token1Address, provider);
+export enum Direction {
+  KYBER_TO_UNISWAP = 0,
+  UNISWAP_TO_KYBER = 1,
+  KYBER_TOKEN_UNISWAP = 2,
+  UNISWAP_TOKEN_KYBER = 3,
+}
 
-//   const amount_token1 = amount_token1_in_eth * ethToken1Rate;
-//   console.log(`👀 ${token1} amount: ${amount_token1}\n`);
+const saveInfo = async (kyberPrice: Price, uniwapPrice: Price) => {
+  const blockInfo = {
+    Timestamp: moment().tz("Asia/Tokyo").format(),
+    kyberBuy: kyberPrice.buy,
+    kyberSell: kyberPrice.sell,
+    uniswapBuy: uniwapPrice.buy,
+    uniswapSell: uniwapPrice.sell,
+  };
 
-//   // const amount_token1_in_wei = Util.etherToWei(amount_token1_in_eth);
-//   // console.log(`👀 ${token1} amount in wei: ${amount_token1_in_wei}\n`);
+  if (config.save_to_mongodb) {
+    saveToMongoDB(blockInfo, "blockInfo");
+  } else {
+    // else save to local file
+    fs.appendFile("blockInfo.log", JSON.stringify(blockInfo) + "\n", (err) => {
+      if (err) console.log(err);
+    });
+  }
+};
 
-//   // fetch kyber buy / sell rates
-//   const kyberRates = await Price.FetchKyberRates(token1Address, token2Address, amount_token1);
+const saveArbInfo = async (arb: Object) => {
+  if (config.save_to_mongodb) {
+    saveToMongoDB(arb, "arb");
+  }
+  // save to local file
+  fs.appendFile("arb.log", JSON.stringify(arb) + "\n", (err) => {
+    if (err) console.log(err);
+  });
+};
 
-//   // fetch uniswap buy / sell rates
-//   const uniswapRates = await Price.FetchUniswapRates(resolvedToken1, resolvedToken2, amount_token1);
+const saveTransactionHash = async (txHash: string) => {
+  if (config.save_to_mongodb) {
+    saveToMongoDB({tx: txHash}, "txHash");
+  }
+  // save to local file
+  fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
+    if (err) console.log(err);
+  });
+};
 
-//   console.table([
-//     {
-//       "Token Pair": `${token1}/${token2}`,
-//       "Input Token Amount In ETH": `${amount_token1_in_eth}`,
-//       "Input Token Amount": `${amount_token1}`,
-//       "Kyber Buy": kyberRates.buy,
-//       "Kyber Sell": kyberRates.sell,
-//       "Uniswap Buy": uniswapRates.buy,
-//       "Uniswap Sell": uniswapRates.sell,
-//       Timestamp: moment().tz("Asia/Tokyo").format(),
-//     },
-//   ]);
+const saveError = async (e: Error) => {
+  if (config.save_to_mongodb) {
+    saveToMongoDB({error: e}, "txError");
+  }
+  // save to local file
+  fs.appendFile("transactionError.log", e + "\n", (err) => {
+    if (err) console.log(err);
+  });
+};
 
-//   saveBlockInfo(block, kyberRates, uniswapRates);
-// };
+// save event log to mongodb or local file
+const saveFlashloanEventLog = async (flashloan: Flashloan) => {
+  const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
+  const logs = await flashloan.provider.getLogs({
+    fromBlock: "latest",
+    toBlock: "latest",
+    address: flashloan.address,
+    topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
+  });
 
-// export enum Direction {
-//   KYBER_TO_UNISWAP = 0,
-//   UNISWAP_TO_KYBER = 1,
-//   KYBER_TOKEN_UNISWAP = 2,
-//   UNISWAP_TOKEN_KYBER = 3,
-// }
+  logs.forEach((log) => {
+    const logData = flashloan.interface.parseLog(log);
+    const record = logData.args.toString();
+    if (config.save_to_mongodb) {
+      saveToMongoDB({log: record}, "profits");
+    }
 
-// const saveBlockInfo = async (block: number, kyberPrice: Price, uniwapPrice: Price) => {
-//   const blockInfo = {
-//     block,
-//     kyberBuy: kyberPrice.buy,
-//     kyberSell: kyberPrice.sell,
-//     uniswapBuy: uniwapPrice.buy,
-//     uniswapSell: uniwapPrice.sell,
-//   };
+    // else save to local file
+    fs.appendFile("transaction.log", record, (err) => {
+      if (err) console.log(err);
+    });
+  });
+};
 
-//   if (config.save_to_mongodb) {
-//     saveToMongoDB(blockInfo, "blockInfo");
-//   } else {
-//     // else save to local file
-//     fs.appendFile("blockInfo.log", JSON.stringify(blockInfo) + "\n", (err) => {
-//       if (err) console.log(err);
-//     });
-//   }
-// };
+const resolveDirection = (direction: Direction, token?: string): string => {
+  switch (direction) {
+    case Direction.KYBER_TO_UNISWAP:
+      return "Kyber to Uniswap";
+    case Direction.UNISWAP_TO_KYBER:
+      return "Uniswap to Kyber";
+    case Direction.KYBER_TOKEN_UNISWAP:
+      return `Kyber token Uniswap ${token}`;
+    case Direction.UNISWAP_TOKEN_KYBER:
+      return `Uniswap token Kyber ${token}`;
+    default:
+      // no, it's impossible
+      return "Unknown";
+  }
+};
 
-// const saveTransactionHash = async (txHash: string) => {
-//   if (config.save_to_mongodb) {
-//     saveToMongoDB({tx: txHash}, "txHash");
-//   }
+// save data to mongodb atlas
+const saveToMongoDB = async (record: Object, collection: string) => {
+  // console.log("Connected to Database");
+  const db = (await mongoClient.getInstance()).db("flashloan");
+  const profits = db.collection(collection);
+  await profits.insertOne(record).catch((err: Error) => console.error(err));
+  // console.log(result);
+};
 
-//   // else save to local file
-//   fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
-//     if (err) console.log(err);
-//   });
-// };
+const mongoClient = (() => {
+  let instance: MongoClient;
+  const createInstance = async () => {
+    const connectString = `mongodb+srv://flashloan:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
+    return await MongoClient.connect(connectString, {
+      useUnifiedTopology: true,
+    });
+  };
 
-// // save event log to mongodb or local file
-// const saveFlashloanEventLog = async (flashloan: Flashloan, block: number) => {
-//   const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
-//   const logs = await flashloan.provider.getLogs({
-//     fromBlock: block,
-//     toBlock: "latest",
-//     address: flashloan.address,
-//     topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
-//   });
+  return {
+    getInstance: async () => {
+      if (!instance) {
+        instance = await createInstance();
+      }
+      return instance;
+    },
+  };
+})();
 
-//   logs.forEach((log) => {
-//     const logData = flashloan.interface.parseLog(log);
-//     const record = logData.args.toString();
-//     if (config.save_to_mongodb) {
-//       saveToMongoDB({log: record}, "profits");
-//     }
-
-//     // else save to local file
-//     fs.appendFile("transaction.log", record, (err) => {
-//       if (err) console.log(err);
-//     });
-//   });
-// };
-
-// const resolveDirection = (direction: Direction, token?: string): string => {
-//   switch (direction) {
-//     case Direction.KYBER_TO_UNISWAP:
-//       return "Kyber to Uniswap";
-//     case Direction.UNISWAP_TO_KYBER:
-//       return "Uniswap to Kyber";
-//     case Direction.KYBER_TOKEN_UNISWAP:
-//       return `Kyber token Uniswap ${token}`;
-//     case Direction.UNISWAP_TOKEN_KYBER:
-//       return `Uniswap token Kyber ${token}`;
-//     default:
-//       // no, it's impossible
-//       return "Unknown";
-//   }
-// };
-
-// // save data to mongodb atlas
-// const saveToMongoDB = async (record: Object, collection: string) => {
-//   // console.log("Connected to Database");
-//   const db = (await mongoClient.getInstance()).db("flashloan");
-//   const profits = db.collection(collection);
-//   await profits.insertOne(record).catch((err: Error) => console.error(err));
-//   // console.log(result);
-// };
-
-// const mongoClient = (() => {
-//   let instance: MongoClient;
-//   const createInstance = async () => {
-//     console.log("Connecting to Database");
-//     const connectString = `mongodb+srv://flashloan:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
-//     return await MongoClient.connect(connectString, {
-//       useUnifiedTopology: true,
-//     });
-//   };
-
-//   return {
-//     getInstance: async () => {
-//       if (!instance) {
-//         instance = await createInstance();
-//       }
-//       return instance;
-//     },
-//   };
-// })();
-
-// // main logic
-// main();
+// main logic
+main();

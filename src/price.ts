@@ -162,6 +162,7 @@ export class Price {
   };
 
   static fetchKyberTokenPairRate = async (token1Address: string, token2Address: string, provider: ethers.providers.Provider) => {
+    if (token1Address == token2Address) return 1;
     const kyber = KyberNetworkProxyFactory.connect(addresses.kyber.kyberNetworkProxy, provider);
     const expectedRate = (await kyber.getExpectedRate(token1Address, token2Address, 1e8)).expectedRate;
     return parseFloat(ethers.utils.formatEther(expectedRate));
