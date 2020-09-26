@@ -77,7 +77,9 @@ const main = async () => {
   console.log(`👀 Token2 is ${token2}\n`);
 
   for (let i = 0; ; i++) {
+    console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n`);
     await runArbitrage(token1, token2, i);
+    console.log(`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n`);
   }
 };
 
@@ -91,7 +93,7 @@ const runArbitrage = async (token1: string, token2: string, index: number) => {
 
   const ethToken1Rate = await Price.fetchKyberTokenPairRate(ethAddress, token1Address, provider);
   const amount_token1 = amount_token1_in_eth * ethToken1Rate;
-  console.log(`👀 ${token1} amount: ${amount_token1}\n`);
+  console.log(`👀 token1(${token1}) amount: ${amount_token1}\n`);
 
   resolvedToken1.amount = amount_token1;
 
@@ -193,7 +195,7 @@ const runArbitrage = async (token1: string, token2: string, index: number) => {
         return;
       }
 
-      console.log(chalk.green("ℹ Arbitrage opportunity found!\n"));
+      console.log(chalk.green(`ℹ Arbitrage opportunity found! ${dryrun ? "(dryrun ignores profit)" : ""}\n`));
       console.log(chalk.green(`ℹ Direction: ${resolveDirection(direction)}\n`));
       console.log(`Expected profit: ${profit} USD\n`);
 
