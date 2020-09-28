@@ -11,6 +11,9 @@
     "lend": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
     "link": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
     "mkr": "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
-    "susd": "0x57ab1ec28d129707052df4df418d58a2d46d5f51"
+    "susd": "0x57ab1ec28d129707052df4df418d58a2d46d5f51",
+    "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "dai": "0x6b175474e89094c44da98b954eedeac495271d0f",
+    "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
   }
 }

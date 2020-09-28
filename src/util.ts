@@ -53,7 +53,7 @@ export class Util {
           case "weth":
             return new Token("weth", this.wethAddress, amount);
           case "usdc":
-            return new Token("usdc", this.usdcAddress, amount);
+            return new Token("usdc", this.usdcAddress, amount, 6);
           default:
             return Token.InvalidToken;
         }
@@ -63,6 +63,9 @@ export class Util {
     static Token2 = class {
       static tokens = addresses.tokens.token2;
       // to checksum address
+      static daiAddress = ethers.utils.getAddress(addresses.tokens.token2.dai);
+      static wethAddress = ethers.utils.getAddress(addresses.tokens.token2.weth);
+      static usdcAddress = ethers.utils.getAddress(addresses.tokens.token2.usdc);
       static ethAddress = ethers.utils.getAddress(addresses.tokens.token2.eth);
       static kncAddress = ethers.utils.getAddress(addresses.tokens.token2.knc);
       static lendAddress = ethers.utils.getAddress(addresses.tokens.token2.lend);
@@ -73,6 +76,12 @@ export class Util {
 
       static resolveToken(token: string, amount?: number): Token {
         switch (token) {
+          case "dai":
+            return new Token("dai", this.daiAddress, amount);
+          case "weth":
+            return new Token("weth", this.wethAddress, amount);
+          case "usdc":
+            return new Token("usdc", this.usdcAddress, amount, 6);
           case "knc":
             return new Token("knc", this.kncAddress, amount);
           case "lend":
@@ -109,6 +118,6 @@ export class Util {
 }
 
 export class Token {
-  constructor(public name: string, public address: string, public amount?: number) {}
+  constructor(public name: string, public address: string, public amount?: number, public decimals = 18) {}
   static InvalidToken = new Token("NA", "", -1);
 }
