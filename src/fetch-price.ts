@@ -6,6 +6,7 @@ import {Price} from "./price";
 import readline from "readline";
 import chalk from "chalk";
 import {ethers} from "ethers";
+import {skipPair} from "./run-arbitrage";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -46,23 +47,8 @@ const main = async () => {
           const results: PriceResult[] = [];
           for (let token1 of token1List) {
             for (let token2 of token2List) {
-              if (token1 == "weth" && token2 == "eth") {
-                console.log(chalk.yellow(`ℹ skip ${token1}/${token2}`));
-                continue;
-              }
-
-              if (token1 == "usdc" && token2 == "susd") {
-                console.log(chalk.yellow(`ℹ skip ${token1}/${token2}`));
-                continue;
-              }
-
-              if (token1 == "usdc" && token2 == "mkr") {
-                console.log(chalk.yellow(`ℹ skip ${token1}/${token2}`));
-                continue;
-              }
-
-              if (token1 == token2) {
-                console.log(chalk.yellow(`ℹ skip ${token1}/${token2}`));
+              if (await skipPair(token1, token2)) {
+                console.log(chalk.yellow(`⚠ skip ${token1}/${token2}\n`));
                 continue;
               }
 

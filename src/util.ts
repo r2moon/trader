@@ -7,8 +7,6 @@ import {ethers} from "ethers";
 export class Util {
   static Config = class {
     static dryrun = config.dryrun;
-    static token1 = config.token1.toLowerCase();
-    static token2 = config.token2.toLowerCase();
     static amount_token1_in_eth = config.amount_token1_in_eth;
     static network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
     static txcost_gas_price_buff_in_wei = config.txcost_gas_price_buff_in_wei;
@@ -17,19 +15,6 @@ export class Util {
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
-
-    static isValidToken1 = () => {
-      // USDC | DAI | WETH
-      const token1 = Util.Config.token1;
-      return token1 == "dai" || token1 == "usdc" || token1 == "weth";
-    };
-
-    static isValidToken2 = () => {
-      const token2 = Util.Config.token2;
-      return (
-        token2 == "eth" || token2 == "bat" || token2 == "knc" || token2 == "lend" || token2 == "link" || token2 == "mkr" || token2 == "susd"
-      );
-    };
   };
 
   static Env = class {

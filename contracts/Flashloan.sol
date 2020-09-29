@@ -50,16 +50,8 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     Account.Info memory account,
     bytes memory data
   ) public {
-    ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));
-    /**
-     * token1 should be one the following tokens, we check it on script side
-     * USDC | DAI | WETH
-     */
-    IERC20 token1 = IERC20(arbInfo.token1);
-    /**
-     * token2 should be one of the following tokens
-     * BAT | KNC | LEND | LINK | MKR | SUSD
-     */
+    ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));    
+    IERC20 token1 = IERC20(arbInfo.token1);    
     IERC20 token2 = IERC20(arbInfo.token2);
 
     uint256 balanceSrc = token1.balanceOf(address(this));
