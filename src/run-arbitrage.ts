@@ -125,7 +125,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
     return;
   }
 
-  // if dryrun we always trigger it. Otherwise we check it profit found
+  // if dryrun we always trigger it. Otherwise we check if profit found
   if (dryrun || rawProfit) {
     if (!dryrun) await saveInfo(record);
 
@@ -166,6 +166,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
     Util.Log.info(`👀 Uniswap service fee is ${uniswapServiceFee} ${token1Name}`);
 
     // total cost
+    // this is not 100% accurate since we need to calculate the service fee by token2 when swap back. But it shouldn't matter so much
     const cost = txCost + kyberServiceFee + uniswapServiceFee;
     Util.Log.info(`👀 total cost is ${cost} ${token1Name}`);
 
@@ -184,7 +185,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
       const balance = await provider.getBalance(wallet.address);
       // check wallet balance. Skip if not enough balance
       const insufficientBalance = balance.lte(gasPrice.mul(gasLimit)); // balance less than txCost wei
-      if (insufficientBalance) {
+      if (!dryrun && insufficientBalance) {
         Util.Log.error(`⚠ Insufficient balance. Skip`);
         return;
       }
@@ -196,11 +197,12 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
       const record = {time: moment().tz("Asia/Tokyo").format(), direction: directionInfo, profit: profit};
       saveArbInfo(record);
 
+      // hard code a gas limit
       const options = {
-        gasLimit: txcost_gas_limit,
+        gasLimit: 6000000,
       };
 
-      // if dryrun we don't call smartcontract
+      // if dryrun we just return
       if (dryrun) return;
 
       try {
@@ -224,7 +226,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
         saveFlashloanEventLog(flashloan);
       } catch (e) {
         Util.Log.error(`⚠ tx error!`);
-        console.log(e);
+        Util.Log.error(e);
         saveError(e);
       }
     }
@@ -244,7 +246,7 @@ const saveInfo = async (record: Object) => {
   } else {
     // else save to local file
     fs.appendFile("priceInfo.log", JSON.stringify(record) + "\n", (err) => {
-      if (err) console.log(err);
+      if (err) Util.Log.error(err);
     });
   }
 };
@@ -255,7 +257,7 @@ const saveArbInfo = async (arb: Object) => {
   }
   // save to local file
   fs.appendFile("arbs.log", JSON.stringify(arb) + "\n", (err) => {
-    if (err) console.log(err);
+    if (err) Util.Log.error(err);
   });
 };
 
@@ -265,7 +267,7 @@ const saveTransactionHash = async (txHash: string) => {
   }
   // save to local file
   fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
-    if (err) console.log(err);
+    if (err) Util.Log.error(err);
   });
 };
 
@@ -275,7 +277,7 @@ const saveError = async (e: Error) => {
   }
   // save to local file
   fs.appendFile("transactionError.log", e + "\n", (err) => {
-    if (err) console.log(err);
+    if (err) Util.Log.error(err);
   });
 };
 
@@ -298,7 +300,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan) => {
 
     // else save to local file
     fs.appendFile("transaction.log", record, (err) => {
-      if (err) console.log(err);
+      if (err) Util.Log.error(err);
     });
   });
 };

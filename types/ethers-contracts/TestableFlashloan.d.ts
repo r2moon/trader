@@ -49,7 +49,7 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
     "GetDirection(uint8)": EventFragment;
     "GetFinalBalance(uint256)": EventFragment;
     "GetKyberExpectedRate(uint256)": EventFragment;
-    "GetProfit(int256)": EventFragment;
+    "GetRepayAmount(uint256)": EventFragment;
     "GetUniswapMinOuts(uint256[])": EventFragment;
     "NewArbitrage(uint8,address,address,uint256,uint256)": EventFragment;
   };
@@ -59,7 +59,7 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "GetDirection"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetFinalBalance"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetKyberExpectedRate"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GetProfit"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GetRepayAmount"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetUniswapMinOuts"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewArbitrage"): EventFragment;
 }
@@ -188,7 +188,7 @@ export class TestableFlashloan extends Contract {
 
     GetKyberExpectedRate(expectedRate: BigNumberish | null): EventFilter;
 
-    GetProfit(profit: BigNumberish | null): EventFilter;
+    GetRepayAmount(repayAmount: BigNumberish | null): EventFilter;
 
     GetUniswapMinOuts(minOuts: null): EventFilter;
 

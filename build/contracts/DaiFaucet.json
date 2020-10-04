@@ -63,7 +63,7 @@
         "id": 2,
         "nodeType": "ImportDirective",
         "scope": 32,
-        "sourceUnit": 2309,
+        "sourceUnit": 2595,
         "src": "56:56:0",
         "symbolAliases": [],
         "unitAlias": ""
@@ -91,7 +91,7 @@
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_IERC20_$2308",
+              "typeIdentifier": "t_contract$_IERC20_$2594",
               "typeString": "contract IERC20"
             },
             "typeName": {
@@ -99,10 +99,10 @@
               "id": 3,
               "name": "IERC20",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 2308,
+              "referencedDeclaration": 2594,
               "src": "137:6:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_IERC20_$2308",
+                "typeIdentifier": "t_contract$_IERC20_$2594",
                 "typeString": "contract IERC20"
               }
             },
@@ -132,7 +132,7 @@
                       "referencedDeclaration": 4,
                       "src": "197:3:0",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC20_$2308",
+                        "typeIdentifier": "t_contract$_IERC20_$2594",
                         "typeString": "contract IERC20"
                       }
                     },
@@ -166,10 +166,10 @@
                         "name": "IERC20",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 2308,
+                        "referencedDeclaration": 2594,
                         "src": "203:6:0",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_IERC20_$2308_$",
+                          "typeIdentifier": "t_type$_t_contract$_IERC20_$2594_$",
                           "typeString": "type(contract IERC20)"
                         }
                       },
@@ -183,13 +183,13 @@
                       "nodeType": "FunctionCall",
                       "src": "203:18:0",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC20_$2308",
+                        "typeIdentifier": "t_contract$_IERC20_$2594",
                         "typeString": "contract IERC20"
                       }
                     },
                     "src": "197:24:0",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IERC20_$2308",
+                      "typeIdentifier": "t_contract$_IERC20_$2594",
                       "typeString": "contract IERC20"
                     }
                   },
@@ -270,7 +270,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 5658,
+                          "referencedDeclaration": 5944,
                           "src": "333:3:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -325,7 +325,7 @@
                         "referencedDeclaration": 4,
                         "src": "320:3:0",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_IERC20_$2308",
+                          "typeIdentifier": "t_contract$_IERC20_$2594",
                           "typeString": "contract IERC20"
                         }
                       },
@@ -336,7 +336,7 @@
                       "lValueRequested": false,
                       "memberName": "transfer",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 2262,
+                      "referencedDeclaration": 2548,
                       "src": "320:12:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
@@ -449,7 +449,7 @@
         "id": 2,
         "nodeType": "ImportDirective",
         "scope": 32,
-        "sourceUnit": 2309,
+        "sourceUnit": 2595,
         "src": "56:56:0",
         "symbolAliases": [],
         "unitAlias": ""
@@ -477,7 +477,7 @@
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_IERC20_$2308",
+              "typeIdentifier": "t_contract$_IERC20_$2594",
               "typeString": "contract IERC20"
             },
             "typeName": {
@@ -485,10 +485,10 @@
               "id": 3,
               "name": "IERC20",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 2308,
+              "referencedDeclaration": 2594,
               "src": "137:6:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_IERC20_$2308",
+                "typeIdentifier": "t_contract$_IERC20_$2594",
                 "typeString": "contract IERC20"
               }
             },
@@ -518,7 +518,7 @@
                       "referencedDeclaration": 4,
                       "src": "197:3:0",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC20_$2308",
+                        "typeIdentifier": "t_contract$_IERC20_$2594",
                         "typeString": "contract IERC20"
                       }
                     },
@@ -552,10 +552,10 @@
                         "name": "IERC20",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 2308,
+                        "referencedDeclaration": 2594,
                         "src": "203:6:0",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_IERC20_$2308_$",
+                          "typeIdentifier": "t_type$_t_contract$_IERC20_$2594_$",
                           "typeString": "type(contract IERC20)"
                         }
                       },
@@ -569,13 +569,13 @@
                       "nodeType": "FunctionCall",
                       "src": "203:18:0",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC20_$2308",
+                        "typeIdentifier": "t_contract$_IERC20_$2594",
                         "typeString": "contract IERC20"
                       }
                     },
                     "src": "197:24:0",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IERC20_$2308",
+                      "typeIdentifier": "t_contract$_IERC20_$2594",
                       "typeString": "contract IERC20"
                     }
                   },
@@ -656,7 +656,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 5658,
+                          "referencedDeclaration": 5944,
                           "src": "333:3:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -711,7 +711,7 @@
                         "referencedDeclaration": 4,
                         "src": "320:3:0",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_IERC20_$2308",
+                          "typeIdentifier": "t_contract$_IERC20_$2594",
                           "typeString": "contract IERC20"
                         }
                       },
@@ -722,7 +722,7 @@
                       "lValueRequested": false,
                       "memberName": "transfer",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 2262,
+                      "referencedDeclaration": 2548,
                       "src": "320:12:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
@@ -821,7 +821,7 @@
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-09-08T17:09:22.202Z",
+  "updatedAt": "2020-10-04T13:07:05.065Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

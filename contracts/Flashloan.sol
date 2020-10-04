@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: ISC
 // todo: gas token
-// todo: curve integration
+// todo: curve.fi integration
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;
 
@@ -50,8 +50,8 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     Account.Info memory account,
     bytes memory data
   ) public {
-    ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));    
-    IERC20 token1 = IERC20(arbInfo.token1);    
+    ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));
+    IERC20 token1 = IERC20(arbInfo.token1);
     IERC20 token2 = IERC20(arbInfo.token2);
 
     uint256 balanceSrc = token1.balanceOf(address(this));

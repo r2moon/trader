@@ -18,8 +18,9 @@ module.exports = {
     testnet: {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(privKey, infuraTestnetUri),
-      network_id: 42,
-      gasPrice: ethers.utils.parseUnits("41", "gwei").toString(),
+      network_id: 42, // kovan
+      gasPrice: ethers.utils.parseUnits("90", "gwei").toString(),
+      gas: 6000000,
     },
     development: {
       host: "127.0.0.1",

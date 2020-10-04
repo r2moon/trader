@@ -135,11 +135,6 @@ const _abi = [
         internalType: "uint256",
         name: "min_dy",
         type: "uint256"
-      },
-      {
-        internalType: "uint256",
-        name: "deadline",
-        type: "uint256"
       }
     ],
     name: "exchange",
@@ -169,6 +164,11 @@ const _abi = [
       {
         internalType: "uint256",
         name: "min_dy",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "deadline",
         type: "uint256"
       }
     ],

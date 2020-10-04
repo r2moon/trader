@@ -25,7 +25,7 @@ interface ICurveFiCurveInterface extends ethers.utils.Interface {
     "add_liquidity(uint256[2],uint256)": FunctionFragment;
     "get_dy(int128,int128,uint256)": FunctionFragment;
     "get_dy_underlying(int128,int128,uint256)": FunctionFragment;
-    "exchange(int128,int128,uint256,uint256,uint256)": FunctionFragment;
+    "exchange(int128,int128,uint256,uint256)": FunctionFragment;
     "exchange_underlying(int128,int128,uint256,uint256,uint256)": FunctionFragment;
     "remove_liquidity(uint256,uint256,uint256[2])": FunctionFragment;
     "remove_liquidity_imbalance(uint256[2],uint256)": FunctionFragment;
@@ -69,13 +69,7 @@ interface ICurveFiCurveInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "exchange",
-    values: [
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "exchange_underlying",
@@ -324,20 +318,20 @@ export class ICurveFiCurve extends Contract {
       0: BigNumber;
     }>;
 
+    "exchange(int128,int128,uint256,uint256)"(
+      i: BigNumberish,
+      j: BigNumberish,
+      dx: BigNumberish,
+      min_dy: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
     "exchange(int128,int128,uint256,uint256,uint256)"(
       i: BigNumberish,
       j: BigNumberish,
       dx: BigNumberish,
       min_dy: BigNumberish,
       deadline: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "exchange(int128,int128,uint256,uint256)"(
-      i: BigNumberish,
-      j: BigNumberish,
-      dx: BigNumberish,
-      min_dy: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
@@ -563,20 +557,20 @@ export class ICurveFiCurve extends Contract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  "exchange(int128,int128,uint256,uint256)"(
+    i: BigNumberish,
+    j: BigNumberish,
+    dx: BigNumberish,
+    min_dy: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
   "exchange(int128,int128,uint256,uint256,uint256)"(
     i: BigNumberish,
     j: BigNumberish,
     dx: BigNumberish,
     min_dy: BigNumberish,
     deadline: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "exchange(int128,int128,uint256,uint256)"(
-    i: BigNumberish,
-    j: BigNumberish,
-    dx: BigNumberish,
-    min_dy: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
@@ -796,20 +790,20 @@ export class ICurveFiCurve extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    "exchange(int128,int128,uint256,uint256)"(
+      i: BigNumberish,
+      j: BigNumberish,
+      dx: BigNumberish,
+      min_dy: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     "exchange(int128,int128,uint256,uint256,uint256)"(
       i: BigNumberish,
       j: BigNumberish,
       dx: BigNumberish,
       min_dy: BigNumberish,
       deadline: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "exchange(int128,int128,uint256,uint256)"(
-      i: BigNumberish,
-      j: BigNumberish,
-      dx: BigNumberish,
-      min_dy: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1014,20 +1008,20 @@ export class ICurveFiCurve extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    "exchange(int128,int128,uint256,uint256)"(
+      i: BigNumberish,
+      j: BigNumberish,
+      dx: BigNumberish,
+      min_dy: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     "exchange(int128,int128,uint256,uint256,uint256)"(
       i: BigNumberish,
       j: BigNumberish,
       dx: BigNumberish,
       min_dy: BigNumberish,
       deadline: BigNumberish,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "exchange(int128,int128,uint256,uint256)"(
-      i: BigNumberish,
-      j: BigNumberish,
-      dx: BigNumberish,
-      min_dy: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
@@ -1230,20 +1224,20 @@ export class ICurveFiCurve extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    "exchange(int128,int128,uint256,uint256)"(
+      i: BigNumberish,
+      j: BigNumberish,
+      dx: BigNumberish,
+      min_dy: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
     "exchange(int128,int128,uint256,uint256,uint256)"(
       i: BigNumberish,
       j: BigNumberish,
       dx: BigNumberish,
       min_dy: BigNumberish,
       deadline: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "exchange(int128,int128,uint256,uint256)"(
-      i: BigNumberish,
-      j: BigNumberish,
-      dx: BigNumberish,
-      min_dy: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
