@@ -1,0 +1,13 @@
+diff --git a/node_modules/cross-var/index.js b/node_modules/cross-var/index.js
+index bf43f4d..40edb62 100755
+--- a/node_modules/cross-var/index.js
++++ b/node_modules/cross-var/index.js
+@@ -2,6 +2,6 @@
+ 
+ require( "babel-register" )( {
+     ignore: false,
+-    only: /src/
++    only: /cross-var\/src/
+ } );
+ require( "./src/index.js" );
+\ No newline at end of file

@@ -4,11 +4,12 @@
   "description": "profitable flashloan",
   "license": "ISC",
   "scripts": {
+    "postinstall": "patch-package",
     "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
     "prepare": "tsc -p tsconfig.json",
     "start": "ts-node src/run-arbitrage.ts",
     "fetch-price": "ts-node src/fetch-price.ts",
-    "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<infura project id>> --account='<<private key>>,1000000000000000000000'",
+    "fork": "dotenv cross-var ganache-cli --fork %INFURA_URI% --account='%PRIVATE_KEY%,1000000000000000000000'",
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
     "deploy:mainnet": "truffle migrate --reset --network mainnet",
@@ -22,6 +23,7 @@
     "@babel/preset-typescript": "^7.10.4",
     "@studydefi/money-legos": "^2.3.5",
     "@truffle/hdwallet-provider": "^1.0.35",
+    "@uniswap/sdk": "^3.0.3",
     "chalk": "^4.1.0",
     "console.table": "^0.10.0",
     "csv-writer": "^1.6.0",
@@ -34,7 +36,8 @@
     "moment-timezone": "^0.5.31",
     "mongodb": "^3.5.9",
     "node-fetch": "^2.6.0",
-    "@uniswap/sdk": "^3.0.3"
+    "patch-package": "^6.2.2",
+    "postinstall-postinstall": "^2.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.11.1",
@@ -49,6 +52,7 @@
     "@types/puppeteer": "^3.0.2",
     "babel-jest": "^26.2.2",
     "concurrently": "^5.2.0",
+    "cross-var": "^1.1.0",
     "jest": "^26.1.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.54",

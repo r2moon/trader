@@ -23344,15 +23344,28 @@
           ],
           "name": "NewArbitrage",
           "type": "event"
+        },
+        "0x71f13a74ceeef12b195797c22d39486aa2cef79b1a5e66259f3ad872542baca8": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "repayAmount",
+              "type": "uint256"
+            }
+          ],
+          "name": "GetRepayAmount",
+          "type": "event"
         }
       },
       "links": {},
-      "address": "0x81d2d7C570A35107233696f29dbA0dBD4a8a06b3",
-      "transactionHash": "0x39d530cffe9ad81747efc508a2a6cddd8531ce36165cdfd9227b9bb59c5c408e"
+      "address": "0x095f6f0266b4aAe00F67578B43CfA1abE2beDD46",
+      "transactionHash": "0x856313369dcae1f347f72654d22791c5a8faced59b2898de5afc53089e90b205"
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-10-04T13:07:05.048Z",
+  "updatedAt": "2020-10-04T15:27:52.358Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}
