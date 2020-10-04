@@ -3,7 +3,6 @@ import {ethers} from "ethers";
 import {KyberNetworkProxyFactory} from "../types/ethers-contracts/KyberNetworkProxyFactory";
 import addresses from "../addresses";
 import {ChainId, Fetcher, TokenAmount, Token, WETH} from "@uniswap/sdk";
-import chalk from "chalk";
 
 const wethAddress = Util.Address.Token2.wethAddress;
 const ethAddress = Util.Address.Token2.ethAddress;
@@ -15,7 +14,7 @@ export class Price {
   // fetch uniswap output amount
   static FetchUniswapOutput = async (tokenSrc: TokenConfig, tokenDest: TokenConfig, retry = 0): Promise<number> => {
     if (retry >= maxRetry) {
-      console.log(chalk.red(`⚠ FetchUniswapOutput (${tokenSrc.name}/${tokenDest.name}) Failed! Skip`));
+      Util.Log.error(`⚠ FetchUniswapOutput (${tokenSrc.name}/${tokenDest.name}) Failed! Skip`);
       return 0;
     }
 
@@ -32,7 +31,7 @@ export class Price {
       const amount_token_dest = Util.weiToEther(outputAmount[0].raw.toString());
       return parseFloat(amount_token_dest) * 10 ** (18 - tokenDest.decimals);
     } catch (e) {
-      console.log(chalk.yellow(`👀 FetchUniswapOutput Error (${tokenSrc.name}/${tokenDest.name}). Retrying ...`));
+      Util.Log.info(`👀 FetchUniswapOutput Error (${tokenSrc.name}/${tokenDest.name}). Retrying ...`);
       Util.sleep(1000);
       return await Price.FetchUniswapOutput(tokenSrc, tokenDest, ++retry);
     }
@@ -46,7 +45,7 @@ export class Price {
     retry = 0
   ): Promise<number> => {
     if (retry >= maxRetry) {
-      console.log(chalk.red(`⚠ FetchKyberOutput (${tokenSrc.name}/${tokenDest.name}) Failed! Skip`));
+      Util.Log.error(`⚠ FetchKyberOutput (${tokenSrc.name}/${tokenDest.name}) Failed! Skip`);
       return 0;
     }
 
@@ -56,7 +55,7 @@ export class Price {
       const expectedRate = (await kyber.getExpectedRate(tokenSrc.address, tokenDest.address, amount_token_src)).expectedRate;
       return parseFloat(Util.weiToEther(expectedRate)) * tokenSrc.amount!;
     } catch (e) {
-      console.log(chalk.yellow(`👀 FetchKyberOutput Error (${tokenSrc.name}/${tokenDest.name}). Retrying ...`));
+      Util.Log.info(`👀 FetchKyberOutput Error (${tokenSrc.name}/${tokenDest.name}). Retrying ...`);
       Util.sleep(1000);
       return await Price.FetchKyberOutput(tokenSrc, tokenDest, provider, ++retry);
     }

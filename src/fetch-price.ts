@@ -6,7 +6,6 @@ import {Price} from "./price";
 import readline from "readline";
 import chalk from "chalk";
 import {ethers} from "ethers";
-import {skipPair} from "./run-arbitrage";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -15,7 +14,7 @@ const rl = readline.createInterface({
 
 const infuraUri = Util.Env.infuraUri;
 if (!infuraUri) {
-  console.log(chalk.red("ℹ Must assign INFURA_URI"));
+  Util.Log.error("ℹ Must assign INFURA_URI");
   process.exit();
 }
 
@@ -24,22 +23,22 @@ const provider = new ethers.providers.JsonRpcProvider(infuraUri);
 
 const main = async () => {
   rl.question(chalk.yellow("* Select input token (dai | usdc | weth | * for all)\n"), async function (token1) {
-    console.log(chalk.green(`👀 token1 is ${token1 == "*" ? "ALL" : token1}\n`));
+    Util.Log.success(`👀 token1 is ${token1 == "*" ? "ALL" : token1}`);
 
     rl.question(
       chalk.yellow("* Select output token (dai | usdc | weth | eth | bat | knc | lend | link | mkr | susd | * for all)\n"),
       async function (token2) {
-        console.log(chalk.green(`👀 token2 is ${token2 == "*" ? "ALL" : token2}\n`));
+        Util.Log.success(`👀 token2 is ${token2 == "*" ? "ALL" : token2}`);
 
         rl.question(chalk.yellow(`* Select input token amount (default is 1)\n`), async function (amount) {
           if (Number(amount) > 0) amount_token1 = Number(amount);
-          console.log(chalk.green(`👀 token1 amount is ${amount_token1}\n`));
+          Util.Log.success(`👀 token1 amount is ${amount_token1}`);
 
           if (token2 == "*" && token1 == "*") {
-            console.log(chalk.yellow("⚠ Fetching a whole price list takes 1 or 2 minutes\n"));
+            Util.Log.info("⚠ Fetching a whole price list takes 1 or 2 minutes\n");
           }
 
-          console.log(chalk.green(`🚀 Loading ... \n`));
+          Util.Log.success(`🚀 Loading ... \n`);
 
           const token1List = Object.keys(addresses.tokens.token1).filter((x) => token1 == x || token1 == "*");
           const token2List = Object.keys(addresses.tokens.token2).filter((x) => token2 == x || token2 == "*");
@@ -47,8 +46,8 @@ const main = async () => {
           const results: PriceResult[] = [];
           for (let token1 of token1List) {
             for (let token2 of token2List) {
-              if (await skipPair(token1, token2)) {
-                console.log(chalk.yellow(`⚠ skip ${token1}/${token2}\n`));
+              if (await Util.skipPair(token1, token2)) {
+                Util.Log.info(`⚠ skip ${token1}/${token2}`);
                 continue;
               }
 
@@ -59,7 +58,7 @@ const main = async () => {
           rl.question(chalk.yellow("* Would you like to generate the final report? (y|n)\n"), async function (yN) {
             rl.close();
             if (yN.toLowerCase() == "y" || yN.toLowerCase() == "yes") {
-              console.log(chalk.bgGreen("********************Final Report********************\n"));
+              Util.Log.success("********************Final Report********************");
               results.forEach((r) =>
                 // prettier-ignore
                 console.table([

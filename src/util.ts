@@ -3,6 +3,8 @@ import config from "../config.json";
 import addresses from "../addresses";
 import truffleConfig from "../truffle-config";
 import {ethers} from "ethers";
+import chalk from "chalk";
+import {MongoClient} from "mongodb";
 
 export class Util {
   static Config = class {
@@ -100,6 +102,61 @@ export class Util {
   };
 
   static weiToEther = ethers.utils.formatEther;
+
+  // skip invalid pairs
+  static skipPair = async (token1: string, token2: string) => {
+    return (
+      (token1 == "weth" && token2 == "eth") ||
+      (token1 == "usdc" && token2 == "susd") ||
+      (token1 == "usdc" && token2 == "mkr") ||
+      token1 == token2
+    );
+  };
+
+  // log
+  static Log = class {
+    static info = (...text: unknown[]) => {
+      console.log(chalk.yellow(text, "\n"));
+    };
+
+    static error = (...text: unknown[]) => {
+      console.log(chalk.red(text, "\n"));
+    };
+
+    static success = (...text: unknown[]) => {
+      console.log(chalk.green(text, "\n"));
+    };
+  };
+
+  static Storage = class {
+    static mongoClient = (() => {
+      let instance: MongoClient;
+      const createInstance = async () => {
+        const connectString = `mongodb+srv://flashloan:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
+        return await MongoClient.connect(connectString, {
+          useUnifiedTopology: true,
+        });
+      };
+
+      return {
+        getInstance: async () => {
+          if (!instance) {
+            instance = await createInstance();
+          }
+          return instance;
+        },
+      };
+    })();
+
+    // save data to mongodb atlas
+    static saveToMongoDB = async (record: Object, collection: string) => {
+      // console.log("Connected to Database");
+      const db = (await Util.Storage.mongoClient.getInstance()).db("flashloan");
+      const profits = db.collection(collection);
+      await profits.insertOne(record).catch((err: Error) => console.error(err));
+      // console.log(result);
+    };
+  };
 }
 
 export class Token {

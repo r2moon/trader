@@ -1,50 +1,36 @@
 require("console.table");
 import fs from "fs";
-import chalk from "chalk";
 import {ethers} from "ethers";
 import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
 import FlashloanContract from "../build/contracts/Flashloan.json";
 import {Flashloan} from "../types/ethers-contracts/Flashloan";
-import {MongoClient} from "mongodb";
 import {Util} from "./util";
 import {Price} from "./price";
 import config from "../config.json";
 import moment from "moment-timezone";
 import addresses from "../addresses";
 
-const info = (...text: unknown[]) => {
-  console.log(chalk.yellow(text));
-};
-
-const error = (...text: unknown[]) => {
-  console.log(chalk.red(text));
-};
-
-const success = (...text: unknown[]) => {
-  console.log(chalk.green(text));
-};
-
 const dryrun = Util.Config.dryrun;
 if (dryrun) {
-  info("⚠ You are running on DRYRUN mode\n");
+  Util.Log.info("⚠ You are running on DRYRUN mode");
 }
 
 // read infura uri and private key from .env
 const infuraUri = Util.Env.infuraUri;
 if (!infuraUri) {
-  error("⚠ Must assign INFURA_URI\n");
+  Util.Log.error("⚠ Must assign INFURA_URI");
   process.exit();
 }
 
 const privKey = Util.Env.privKey;
 if (!privKey) {
-  error("⚠ Must assign PRIVATE_KEY\n");
+  Util.Log.error("⚠ Must assign PRIVATE_KEY");
   process.exit();
 }
 
 const amount_token1_in_eth = Util.Config.amount_token1_in_eth;
 if (!amount_token1_in_eth) {
-  error("⚠ Must assign amount_token1_in_eth for swap\n");
+  Util.Log.error("⚠ Must assign amount_token1_in_eth for swap");
   process.exit();
 }
 
@@ -77,13 +63,15 @@ const main = async () => {
     for (let token1 of token1List) {
       for (let token2 of token2List) {
         // skip invalid pairs
-        if (await skipPair(token1, token2)) {
-          info(`⚠ skip ${token1}/${token2}\n`);
+        if (await Util.skipPair(token1, token2)) {
+          Util.Log.info(`⚠ skip ${token1}/${token2}\n`);
           continue;
         }
 
         // go
-        success(`\n***********************************${moment().tz("Asia/Tokyo").format()}***************************************\n`);
+        Util.Log.success(
+          `\n***********************************${moment().tz("Asia/Tokyo").format()}***************************************`
+        );
         await runArbitrage(token1, token2, i);
       }
     }
@@ -91,7 +79,7 @@ const main = async () => {
 };
 
 const runArbitrage = async (token1Name: string, token2Name: string, index: number) => {
-  info(`👀 Token pair is ${token1Name}/${token2Name}\n`);
+  Util.Log.info(`👀 Token pair is ${token1Name}/${token2Name}`);
   const token1 = Util.Address.Token1.resolveToken(token1Name);
   const token2 = Util.Address.Token2.resolveToken(token2Name);
 
@@ -133,7 +121,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
   const indexesToSkip = wait_blocks_map[`${token1Name}_${token2Name}`] ?? [];
   if (indexesToSkip.includes(index)) {
     wait_blocks_map[`${token1Name}_${token2Name}`] = indexesToSkip.filter((i: number) => i != index);
-    info(`⚠ Skip loop: ${index}`);
+    Util.Log.info(`⚠ Skip loop: ${index}`);
     return;
   }
 
@@ -151,7 +139,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
         : Direction.UNISWAP_TOKEN_KYBER;
 
     const directionInfo = await resolveDirection(direction, token1Name, token2Name);
-    info(`👀 direction is ${directionInfo}\n`);
+    Util.Log.info(`👀 direction is ${directionInfo}`);
 
     const avgGasPrice = await provider.getGasPrice();
     const [gasPrice, gasLimit] = await Promise.all([
@@ -159,33 +147,33 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
       avgGasPrice.add(txcost_gas_price_buff_in_wei),
       txcost_gas_limit,
     ]);
-    info(`👀 gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei\n`);
+    Util.Log.info(`👀 gas price is ${ethers.utils.formatUnits(gasPrice, "gwei")} GWei`);
 
     // tx cost in token1
     const txCost = parseFloat(Util.weiToEther(gasPrice.mul(gasLimit))) * ethToken1Rate;
-    info(`👀 txCost is ${txCost.toFixed(3)} ${token1Name}\n`);
+    Util.Log.info(`👀 txCost is ${txCost.toFixed(3)} ${token1Name}`);
 
     // gross in token1
     const gross =
       direction == (Direction.KYBER_TO_UNISWAP || Direction.KYBER_TOKEN_UNISWAP)
         ? uniswapReturn - amount_token1
         : kyberReturn - amount_token1;
-    info(`👀 gross is ${gross} ${token1Name}\n`);
+    Util.Log.info(`👀 gross is ${gross} ${token1Name}`);
 
     const kyberServiceFee = amount_token1 * kyber_service_fee;
     const uniswapServiceFee = amount_token1 * uniswap_service_fee;
-    info(`👀 Kyber service fee is ${kyber_service_fee} ${token1Name}\n`);
-    info(`👀 Uniswap service fee is ${uniswapServiceFee} ${token1Name}\n`);
+    Util.Log.info(`👀 Kyber service fee is ${kyber_service_fee} ${token1Name}`);
+    Util.Log.info(`👀 Uniswap service fee is ${uniswapServiceFee} ${token1Name}`);
 
     // total cost
     const cost = txCost + kyberServiceFee + uniswapServiceFee;
-    info(`👀 total cost is ${cost} ${token1Name}\n`);
+    Util.Log.info(`👀 total cost is ${cost} ${token1Name}`);
 
     const profit = gross - cost;
     // eth price is just used to calc profit
     const ethPrice = await Price.FetchKyberOutput(eth, dai, provider);
     const profitInUSD = (profit / ethToken1Rate) * ethPrice;
-    info(`👀 profit is ${profit} ${token1Name} (${profitInUSD} USD)\n`);
+    Util.Log.info(`👀 profit is ${profit} ${token1Name} (${profitInUSD} USD)`);
 
     if (dryrun || profit >= profit_threshold) {
       if (!dryrun && !indexesToSkip.length) {
@@ -197,13 +185,13 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
       // check wallet balance. Skip if not enough balance
       const insufficientBalance = balance.lte(gasPrice.mul(gasLimit)); // balance less than txCost wei
       if (insufficientBalance) {
-        error(`⚠ Insufficient balance. Skip`);
+        Util.Log.error(`⚠ Insufficient balance. Skip`);
         return;
       }
 
-      success(`💰 Arbitrage opportunity found! ${dryrun ? "(dryrun ignores profit)" : ""}\n`);
-      success(`💰 Direction: ${directionInfo}\n`);
-      success(`💰 Expected profit: ${profit} USD\n`);
+      Util.Log.success(`💰 Arbitrage opportunity found! ${dryrun ? "(dryrun ignores profit)" : ""}`);
+      Util.Log.success(`💰 Direction: ${directionInfo}`);
+      Util.Log.success(`💰 Expected profit: ${profit} USD`);
 
       const record = {time: moment().tz("Asia/Tokyo").format(), direction: directionInfo, profit: profit};
       saveArbInfo(record);
@@ -230,12 +218,12 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
 
         const recipt = await tx.wait();
         const txHash = recipt.transactionHash;
-        info(`👀 Transaction hash: ${txHash}\n`);
+        Util.Log.info(`👀 Transaction hash: ${txHash}`);
 
         saveTransactionHash(txHash);
         saveFlashloanEventLog(flashloan);
       } catch (e) {
-        error(`⚠ tx error!`);
+        Util.Log.error(`⚠ tx error!`);
         console.log(e);
         saveError(e);
       }
@@ -252,7 +240,7 @@ export enum Direction {
 
 const saveInfo = async (record: Object) => {
   if (config.save_to_mongodb) {
-    saveToMongoDB(record, "priceInfo");
+    Util.Storage.saveToMongoDB(record, "priceInfo");
   } else {
     // else save to local file
     fs.appendFile("priceInfo.log", JSON.stringify(record) + "\n", (err) => {
@@ -263,7 +251,7 @@ const saveInfo = async (record: Object) => {
 
 const saveArbInfo = async (arb: Object) => {
   if (config.save_to_mongodb) {
-    saveToMongoDB(arb, "arbs");
+    Util.Storage.saveToMongoDB(arb, "arbs");
   }
   // save to local file
   fs.appendFile("arbs.log", JSON.stringify(arb) + "\n", (err) => {
@@ -273,7 +261,7 @@ const saveArbInfo = async (arb: Object) => {
 
 const saveTransactionHash = async (txHash: string) => {
   if (config.save_to_mongodb) {
-    saveToMongoDB({tx: txHash}, "txHash");
+    Util.Storage.saveToMongoDB({tx: txHash}, "txHash");
   }
   // save to local file
   fs.appendFile("transactionHash.log", txHash + "\n", (err) => {
@@ -283,7 +271,7 @@ const saveTransactionHash = async (txHash: string) => {
 
 const saveError = async (e: Error) => {
   if (config.save_to_mongodb) {
-    saveToMongoDB({error: e}, "txError");
+    Util.Storage.saveToMongoDB({error: e}, "txError");
   }
   // save to local file
   fs.appendFile("transactionError.log", e + "\n", (err) => {
@@ -305,7 +293,7 @@ const saveFlashloanEventLog = async (flashloan: Flashloan) => {
     const logData = flashloan.interface.parseLog(log);
     const record = logData.args.toString();
     if (config.save_to_mongodb) {
-      saveToMongoDB({log: record}, "profits");
+      Util.Storage.saveToMongoDB({log: record}, "profits");
     }
 
     // else save to local file
@@ -313,11 +301,6 @@ const saveFlashloanEventLog = async (flashloan: Flashloan) => {
       if (err) console.log(err);
     });
   });
-};
-
-// skip invalid pairs
-export const skipPair = async (token1: string, token2: string) => {
-  return (token1 == "weth" && token2 == "eth") || token1 == token2;
 };
 
 const resolveDirection = async (direction: Direction, token1: string, token2: string) => {
@@ -341,34 +324,6 @@ const resolveProfitFound = async (uniswapReturn: number, kyberReturn: number, am
   if (kyberReturn > amount) return `Uniswap -> Kyber (${(kyberReturn - amount).toFixed(3)})`;
   return false;
 };
-
-// save data to mongodb atlas
-const saveToMongoDB = async (record: Object, collection: string) => {
-  // console.log("Connected to Database");
-  const db = (await mongoClient.getInstance()).db("flashloan");
-  const profits = db.collection(collection);
-  await profits.insertOne(record).catch((err: Error) => console.error(err));
-  // console.log(result);
-};
-
-const mongoClient = (() => {
-  let instance: MongoClient;
-  const createInstance = async () => {
-    const connectString = `mongodb+srv://flashloan:${Util.Env.mongodb_pwd}@cluster0-eosoe.mongodb.net/flashloan?retryWrites=true&w=majority`;
-    return await MongoClient.connect(connectString, {
-      useUnifiedTopology: true,
-    });
-  };
-
-  return {
-    getInstance: async () => {
-      if (!instance) {
-        instance = await createInstance();
-      }
-      return instance;
-    },
-  };
-})();
 
 // main logic
 main();
