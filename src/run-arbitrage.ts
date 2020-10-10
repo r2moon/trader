@@ -197,7 +197,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
 
       Util.Log.success(`💰 Arbitrage opportunity found! ${dryrun ? "(dryrun ignores profit)" : ""}`);
       Util.Log.success(`💰 Direction: ${directionInfo}`);
-      Util.Log.success(`💰 Expected profit: ${profit} USD`);
+      Util.Log.success(`💰 Expected profit: ${profitInUSD} USD`);
 
       const record = {time: moment().tz("Asia/Tokyo").format(), direction: directionInfo, profit: profit};
       saveArbInfo(record);
