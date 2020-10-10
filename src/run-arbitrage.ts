@@ -1,14 +1,16 @@
 require("console.table");
 import fs from "fs";
 import {ethers} from "ethers";
-import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
-import FlashloanContract from "../build/contracts/Flashloan.json";
-import {Flashloan} from "../types/ethers-contracts/Flashloan";
 import {Util} from "./util";
 import {Price} from "./price";
 import config from "../config.json";
 import moment from "moment-timezone";
 import addresses from "../addresses";
+
+import {TestableFlashloanFactory} from "../types/ethers-contracts/TestableFlashloanFactory";
+import TestableFlashloanContract from "../build/contracts/TestableFlashloan.json";
+import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
+import FlashloanContract from "../build/contracts/Flashloan.json";
 
 const dryrun = Util.Config.dryrun;
 if (dryrun) {
@@ -57,8 +59,19 @@ const token2List = Object.keys(addresses.tokens.token2);
 const eth = Util.Address.Token2.resolveToken("eth", 1);
 const dai = Util.Address.Token2.resolveToken("dai");
 
+const useTestnet = Util.Config.useTestnet;
+const contract = useTestnet
+  ? {
+      FlashloanFactory: TestableFlashloanFactory,
+      FlashloanContract: TestableFlashloanContract,
+    }
+  : {
+      FlashloanFactory: FlashloanFactory,
+      FlashloanContract: FlashloanContract,
+    };
+
 const main = async () => {
-  if (Util.Config.useTestnet) {
+  if (useTestnet) {
     Util.Log.info("Running on Kovan testnet. Not all the token pairs are supported");
   }
 
@@ -213,7 +226,13 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
       try {
         const networkId = network.network_id;
         const amount_token1_in_wei = Util.etherToWei(amount_token1_in_eth);
-        const flashloan = FlashloanFactory.connect(FlashloanContract.networks[networkId].address, wallet);
+        const flashloan = contract.FlashloanFactory.connect(
+          (useTestnet ? TestableFlashloanContract : FlashloanContract).networks[networkId].address,
+          wallet
+        );
+
+        console.log(`flashloan address`, flashloan.address);
+
         const tx = await flashloan.initateFlashLoan(
           soloMarginAddress,
           amount_token1_in_wei,
@@ -228,7 +247,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
         Util.Log.info(`👀 Transaction hash: ${txHash}`);
 
         saveTransactionHash(txHash);
-        saveFlashloanEventLog(flashloan);
+        await saveFlashloanEventLog(flashloan);
       } catch (e) {
         Util.Log.error(`⚠ tx error!`);
         Util.Log.error(e);
@@ -287,14 +306,17 @@ const saveError = async (e: Error) => {
 };
 
 // save event log to mongodb or local file
-const saveFlashloanEventLog = async (flashloan: Flashloan) => {
+const saveFlashloanEventLog = async (flashloan) => {
   const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
   const logs = await flashloan.provider.getLogs({
-    fromBlock: "latest",
-    toBlock: "latest",
+    fromBlock: 0,
     address: flashloan.address,
-    topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
+    // topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
   });
+
+  console.log(logs);
+  // remove me!
+  return;
 
   logs.forEach((log) => {
     const logData = flashloan.interface.parseLog(log);

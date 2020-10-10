@@ -8,7 +8,6 @@ import {KyberNetworkProxy as IKyberNetworkProxy} from "@studydefi/money-legos/ky
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IUniswapV2Router02.sol";
 import "./IWeth.sol";
-import "./DaiFaucet.sol";
 
 contract TestableFlashloan is ICallee, DydxFlashloanBase {
   enum Direction {KyberToUniswap, UniswapToKyber, KyberTokenUniswap, UniswapTokenKyber}
@@ -21,6 +20,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
   }
 
   // for debugging
+  event Hit(bool hit);
   event GetDirection(Direction indexed direction);
   event GetKyberExpectedRate(uint256 indexed expectedRate);
   event GetUniswapMinOuts(uint256[] minOuts);
@@ -33,7 +33,6 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
   IKyberNetworkProxy kyber;
   IUniswapV2Router02 uniswap;
   IWeth weth;
-  DaiFaucet daiFaucet;
 
   address beneficiary;
   address constant KYBER_ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -41,14 +40,12 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
   constructor(
     address kyberAddress,
     address uniswapAddress,
-    address wethAddress,
-    address daiFaucetAddress,
+    address wethAddress,    
     address beneficiaryAddress
   ) public {
     kyber = IKyberNetworkProxy(kyberAddress);
     uniswap = IUniswapV2Router02(uniswapAddress);
-    weth = IWeth(wethAddress);
-    daiFaucet = DaiFaucet(daiFaucetAddress);
+    weth = IWeth(wethAddress);    
     beneficiary = beneficiaryAddress;
   }
 
@@ -146,21 +143,19 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
       (uint256 expectedRate, ) = kyber.getExpectedRate(token2, token1, balanceDest);
       emit GetKyberExpectedRate(expectedRate);
       kyber.swapTokenToToken(token2, balanceDest, token1, expectedRate);
-    }
+    }    
 
     uint256 balance = token1.balanceOf(address(this));
     uint256 repayAmount = arbInfo.repayAmount;
-
     emit GetFinalBalance(balance);
     emit GetRepayAmount(repayAmount);
 
-    if (balance < repayAmount) {
-      daiFaucet.sendDai(repayAmount - balance);
-    }
+    require(balance > arbInfo.repayAmount, "Not enough funds to repay dydx loan!");
 
-    uint256 positiveProfit = token1.balanceOf(address(this)) - repayAmount;
-    token1.transfer(beneficiary, positiveProfit);
-    emit NewArbitrage(arbInfo.direction, arbInfo.token1, arbInfo.token2, positiveProfit, now);
+    uint256 profit = balance - arbInfo.repayAmount;
+    require(token1.transfer(beneficiary, profit), "Could not transfer back the profit!");
+
+    emit NewArbitrage(arbInfo.direction, arbInfo.token1, arbInfo.token2, profit, now);    
   }
 
   function initateFlashLoan(
@@ -169,7 +164,10 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
     address _token1,
     address _token2,
     Direction _direction
-  ) external {
+  ) external {    
+    // trigger
+    emit Hit(true);
+
     // Get marketId from token address
     uint256 marketId = _getMarketIdFromTokenAddress(_solo, _token1);
 

@@ -51,6 +51,7 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
     "GetKyberExpectedRate(uint256)": EventFragment;
     "GetRepayAmount(uint256)": EventFragment;
     "GetUniswapMinOuts(uint256[])": EventFragment;
+    "Hit(bool)": EventFragment;
     "NewArbitrage(uint8,address,address,uint256,uint256)": EventFragment;
   };
 
@@ -61,6 +62,7 @@ interface TestableFlashloanInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "GetKyberExpectedRate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetRepayAmount"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "GetUniswapMinOuts"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Hit"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewArbitrage"): EventFragment;
 }
 
@@ -191,6 +193,8 @@ export class TestableFlashloan extends Contract {
     GetRepayAmount(repayAmount: BigNumberish | null): EventFilter;
 
     GetUniswapMinOuts(minOuts: null): EventFilter;
+
+    Hit(hit: null): EventFilter;
 
     NewArbitrage(
       direction: BigNumberish | null,

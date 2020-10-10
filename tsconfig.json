@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     // "rootDir": ".",
     "outDir": "dest",
-    "skipLibCheck": true
+    "skipLibCheck": true,    
   },
   "include": ["tests", "addresses", "src"],
   "exclude": ["dest", "node_modules", "types"]
