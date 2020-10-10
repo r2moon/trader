@@ -34,10 +34,13 @@ yarn test
 
 `https://github.com/dydxprotocol/solo/blob/master/migrations/deployed.json`
 
-## Token Address for different networks
+## KyberNetworkProxy Address
 
 `https://developer.kyber.network/docs/Environments-Kovan/`
-`https://api.kyber.network/currencies`
+
+## Token Address
+
+`https://changelog.makerdao.com/`
 
 ## Uniswap Router Address
 

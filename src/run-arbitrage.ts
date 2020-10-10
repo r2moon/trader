@@ -46,7 +46,6 @@ const uniswap_service_fee = Util.Config.uniswap_service_fee;
 const profit_threshold = Util.Config.profit_threshold;
 
 const soloMarginAddress = Util.Address.soloMarginAddress;
-const ethAddress = Util.Address.Token2.ethAddress;
 
 // define how many blocks to wait after an arb is identified and a trade is made
 const wait_blocks = Util.Config.wait_blocks;
@@ -59,12 +58,15 @@ const eth = Util.Address.Token2.resolveToken("eth", 1);
 const dai = Util.Address.Token2.resolveToken("dai");
 
 const main = async () => {
+  if (Util.Config.useTestnet) {
+    Util.Log.info("Running on Kovan testnet. Not all the token pairs are supported");
+  }
+
   for (let i = 0; ; i++) {
     for (let token1 of token1List) {
       for (let token2 of token2List) {
         // skip invalid pairs
         if (await Util.skipPair(token1, token2)) {
-          Util.Log.info(`⚠ skip ${token1}/${token2}\n`);
           continue;
         }
 
@@ -73,6 +75,9 @@ const main = async () => {
           `\n***********************************${moment().tz("Asia/Tokyo").format()}***************************************`
         );
         await runArbitrage(token1, token2, i);
+
+        // rate limit. remove me when local geth node completes sync up
+        Util.sleep(1500);
       }
     }
   }
@@ -176,7 +181,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
     const profitInUSD = (profit / ethToken1Rate) * ethPrice;
     Util.Log.info(`👀 profit is ${profit} ${token1Name} (${profitInUSD} USD)`);
 
-    if (dryrun || profit >= profit_threshold) {
+    if (dryrun || profitInUSD >= profit_threshold) {
       if (!dryrun && !indexesToSkip.length) {
         // wait 10 loops (start from next loop)
         wait_blocks_map[`${token1Name}_${token2Name}`] = Array.from(Array(wait_blocks), (_, i) => i + index + 1);

@@ -22,46 +22,50 @@ let amount_token1 = 1;
 const provider = new ethers.providers.JsonRpcProvider(infuraUri);
 
 const main = async () => {
+  if (Util.Config.useTestnet) {
+    Util.Log.info("Running on Kovan testnet. Not all the token pairs are supported");
+  }
+
   rl.question(chalk.yellow("* Select input token (dai | usdc | weth | * for all)\n"), async function (token1) {
     Util.Log.success(`👀 token1 is ${token1 == "*" ? "ALL" : token1}`);
 
-    rl.question(
-      chalk.yellow("* Select output token (dai | usdc | weth | eth | bat | knc | lend | link | mkr | susd | * for all)\n"),
-      async function (token2) {
-        Util.Log.success(`👀 token2 is ${token2 == "*" ? "ALL" : token2}`);
+    rl.question(chalk.yellow("* Select output token (dai | usdc | weth | eth | bat | knc | link | mkr | * for all)\n"), async function (
+      token2
+    ) {
+      Util.Log.success(`👀 token2 is ${token2 == "*" ? "ALL" : token2}`);
 
-        rl.question(chalk.yellow(`* Select input token amount (default is 1)\n`), async function (amount) {
-          if (Number(amount) > 0) amount_token1 = Number(amount);
-          Util.Log.success(`👀 token1 amount is ${amount_token1}`);
+      rl.question(chalk.yellow(`* Select input token amount (default is 1)\n`), async function (amount) {
+        if (Number(amount) > 0) amount_token1 = Number(amount);
+        Util.Log.success(`👀 token1 amount is ${amount_token1}`);
 
-          if (token2 == "*" && token1 == "*") {
-            Util.Log.info("⚠ Fetching a whole price list takes 1 or 2 minutes\n");
-          }
+        if (token2 == "*" && token1 == "*") {
+          Util.Log.info("⚠ Fetching a whole price list takes 1 or 2 minutes\n");
+        }
 
-          Util.Log.success(`🚀 Loading ... \n`);
+        Util.Log.success(`🚀 Loading ... \n`);
 
-          const token1List = Object.keys(addresses.tokens.token1).filter((x) => token1 == x || token1 == "*");
-          const token2List = Object.keys(addresses.tokens.token2).filter((x) => token2 == x || token2 == "*");
+        const token1List = Object.keys(addresses.tokens.token1).filter((x) => token1 == x || token1 == "*");
+        const token2List = Object.keys(addresses.tokens.token2).filter((x) => token2 == x || token2 == "*");
 
-          const results: PriceResult[] = [];
-          for (let token1 of token1List) {
-            for (let token2 of token2List) {
-              if (await Util.skipPair(token1, token2)) {
-                Util.Log.info(`⚠ skip ${token1}/${token2}`);
-                continue;
-              }
-
-              results.push(await fetchPrices(token1, token2));
+        const results: PriceResult[] = [];
+        for (let token1 of token1List) {
+          for (let token2 of token2List) {
+            if (await Util.skipPair(token1, token2)) {
+              Util.Log.info(`⚠ skip ${token1}/${token2}`);
+              continue;
             }
-          }
 
-          rl.question(chalk.yellow("* Would you like to generate the final report? (y|n)\n"), async function (yN) {
-            rl.close();
-            if (yN.toLowerCase() == "y" || yN.toLowerCase() == "yes") {
-              Util.Log.success("********************Final Report********************");
-              results.forEach((r) =>
-                // prettier-ignore
-                console.table([
+            results.push(await fetchPrices(token1, token2));
+          }
+        }
+
+        rl.question(chalk.yellow("* Would you like to generate the final report? (y|n)\n"), async function (yN) {
+          rl.close();
+          if (yN.toLowerCase() == "y" || yN.toLowerCase() == "yes") {
+            Util.Log.success("********************Final Report********************");
+            results.forEach((r) =>
+              // prettier-ignore
+              console.table([
                   {
                     "Token Pair": `${r.token1}/${r.token2}`,
                     "Input Token Amount": `${amount_token1} ${r.token1}`,
@@ -70,12 +74,14 @@ const main = async () => {
                     "Profit Found": resolveProfitFound(r.uniswapReturn, r.kyberReturn, amount_token1),
                   },
                 ])
-              );
-            }
-          });
+            );
+          }
+
+          Util.Log.success("Bye!");
+          process.exit(0);
         });
-      }
-    );
+      });
+    });
   });
 };
 

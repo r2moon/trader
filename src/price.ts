@@ -6,7 +6,7 @@ import {ChainId, Fetcher, TokenAmount, Token, WETH} from "@uniswap/sdk";
 
 const wethAddress = Util.Address.Token2.wethAddress;
 const ethAddress = Util.Address.Token2.ethAddress;
-const maxRetry = 3;
+const maxRetry = Util.Config.useTestnet ? 1 : 3;
 
 export class Price {
   constructor(public buy: number, public sell: number) {}
@@ -64,11 +64,15 @@ export class Price {
   private static resolveUniswapToken = (token: TokenConfig) => {
     switch (token.address) {
       case wethAddress:
-        return WETH[ChainId.MAINNET];
+        return WETH[Price.resolveNetwork()];
       case ethAddress:
-        return WETH[ChainId.MAINNET];
+        return WETH[Price.resolveNetwork()];
       default:
-        return new Token(ChainId.MAINNET, token.address, token.decimals);
+        return new Token(Price.resolveNetwork(), token.address, token.decimals);
     }
+  };
+
+  private static resolveNetwork = () => {
+    return Util.Config.useTestnet ? ChainId.KOVAN : ChainId.MAINNET;
   };
 }

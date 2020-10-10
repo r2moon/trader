@@ -17,10 +17,11 @@ export class Util {
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
+    static useTestnet = config.testnet;
   };
 
   static Env = class {
-    static infuraUri = process.env.INFURA_URI || "";
+    static infuraUri = (Util.Config.useTestnet ? process.env.INFURA_TESTNET_URI : process.env.INFURA_URI) || "";
     static privKey = process.env.PRIVATE_KEY || "";
     static mongodb_pwd = process.env.MONGODB_PASSWORD || "";
   };
@@ -55,10 +56,8 @@ export class Util {
       static usdcAddress = ethers.utils.getAddress(addresses.tokens.token2.usdc);
       static ethAddress = ethers.utils.getAddress(addresses.tokens.token2.eth);
       static kncAddress = ethers.utils.getAddress(addresses.tokens.token2.knc);
-      static lendAddress = ethers.utils.getAddress(addresses.tokens.token2.lend);
       static linkAddress = ethers.utils.getAddress(addresses.tokens.token2.link);
       static mkrAddress = ethers.utils.getAddress(addresses.tokens.token2.mkr);
-      static susdAddress = ethers.utils.getAddress(addresses.tokens.token2.susd);
       static batAddress = ethers.utils.getAddress(addresses.tokens.token2.bat);
 
       static resolveToken(token: string, amount?: number): Token {
@@ -71,14 +70,10 @@ export class Util {
             return new Token("usdc", this.usdcAddress, amount, 6);
           case "knc":
             return new Token("knc", this.kncAddress, amount);
-          case "lend":
-            return new Token("lend", this.lendAddress, amount);
           case "link":
             return new Token("link", this.linkAddress, amount);
           case "mkr":
             return new Token("mkr", this.mkrAddress, amount);
-          case "susd":
-            return new Token("susd", this.susdAddress, amount);
           case "bat":
             return new Token("bat", this.batAddress, amount);
           case "eth":
@@ -105,12 +100,12 @@ export class Util {
 
   // skip invalid pairs
   static skipPair = async (token1: string, token2: string) => {
-    return (
-      (token1 == "weth" && token2 == "eth") ||
-      (token1 == "usdc" && token2 == "susd") ||
-      (token1 == "usdc" && token2 == "mkr") ||
-      token1 == token2
-    );
+    if (Util.Config.useTestnet) {
+      // exclude the valid 3 pairs
+      return !((token1 == "dai" && token2 == "weth") || (token1 == "weth" && token2 == "mkr") || (token1 == "weth" && token2 == "dai"));
+    }
+
+    return (token1 == "weth" && token2 == "eth") || (token1 == "usdc" && token2 == "mkr") || token1 == token2;
   };
 
   // log

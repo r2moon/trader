@@ -19,7 +19,7 @@ module.exports = {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(privKey, infuraTestnetUri),
       network_id: 42, // kovan
-      gasPrice: ethers.utils.parseUnits("90", "gwei").toString(),
+      gasPrice: ethers.utils.parseUnits("70", "gwei").toString(),
       gas: 6000000,
     },
     development: {
