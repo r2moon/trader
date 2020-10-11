@@ -17,6 +17,7 @@
     "deploy:mainnet:dry-run": "truffle migrate --reset --network mainnet --dry-run",
     "test": "jest --detectOpenHandles",
     "docker:build": "docker build -t flashloan .",
+    "docker:build:no-cache": "docker build --no-cache -t flashloan .",
     "docker:run": "yarn docker:build && docker run -d flashloan"
   },
   "dependencies": {
