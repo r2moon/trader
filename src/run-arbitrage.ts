@@ -225,6 +225,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
 
       try {
         const networkId = network.network_id;
+        Util.Log.info(`network id: ${networkId}`);
         const amount_token1_in_wei = Util.etherToWei(amount_token1_in_eth);
         const flashloan = contract.FlashloanFactory.connect(
           (useTestnet ? TestableFlashloanContract : FlashloanContract).networks[networkId].address,

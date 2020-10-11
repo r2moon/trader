@@ -32,11 +32,11 @@ yarn test
 
 ## Test On Kovan
 
-set `testnet=true` in `config.json` to switch to Kovan
+set `network: kovan` in `config.json` to switch to Kovan.
 
 ## Dryrun
 
-Dryrun will not trigger the smart contract. It helps to analyze the price and profit output for debugging. Set `dryrun=true` in `config.json` to enable dryrun mode
+Dryrun will not trigger the smart contract. It helps to analyze the price and profit output for debugging. Set `dryrun: true` in `config.json` to enable dryrun mode
 
 ## Price fetcher
 

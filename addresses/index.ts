@@ -29,6 +29,6 @@ const kovan = {
   makerdao: makerdaoKovan,
 };
 
-const useTestnet = config.testnet;
+const useTestnet = config.network.toLowerCase() == "kovan";
 console.log(`using ${useTestnet ? "kovan" : "mainnet"} addresses`);
 export default useTestnet ? kovan : mainnet;

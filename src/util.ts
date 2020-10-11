@@ -10,14 +10,29 @@ export class Util {
   static Config = class {
     static dryrun = config.dryrun;
     static amount_token1_in_eth = config.amount_token1_in_eth;
-    static network = config.use_mainnet_fork ? truffleConfig.networks.mainnetFork : truffleConfig.networks.mainnet;
     static txcost_gas_price_buff_in_wei = config.txcost_gas_price_buff_in_wei;
     static txcost_gas_limit = config.txcost_gas_limit;
     static kyber_service_fee = config.kyber_service_fee;
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
-    static useTestnet = config.testnet;
+    static useMainnetFork = config.network.toLowerCase() == "mainnetfork";
+    static useTestnet = config.network.toLowerCase() == "kovan";
+    static network = (() => {
+      if (config.network.toLowerCase() == "mainnetfork") {
+        return truffleConfig.networks.mainnetFork;
+      }
+      if (config.network.toLowerCase() == "kovan") {
+        return truffleConfig.networks.testnet;
+      }
+
+      if (config.network.toLowerCase() == "mainnet") {
+        return truffleConfig.networks.mainnet;
+      }
+
+      console.error(chalk.red(`Unsupported network ${config.network} in config.json`));
+      process.exit(1);
+    })();
   };
 
   static Env = class {

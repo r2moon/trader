@@ -1,8 +1,7 @@
 {
-  "testnet": true,
+  "network": "kovan",
   "dryrun": false,
   "amount_token1_in_eth": 10,
-  "use_mainnet_fork": false,
   "save_to_mongodb": true,
   "txcost_gas_limit": 2000000,
   "txcost_gas_price_buff_in_wei": 10000000000,
