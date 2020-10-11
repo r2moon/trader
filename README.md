@@ -61,3 +61,8 @@ yarn fetch-price
 ## Uniswap Router Address
 
 `https://uniswap.org/docs/v2/smart-contracts/router02/`
+
+## Flashloan Mainnet Contract Address
+
+address: `0x6d546843F281E23B853fD82ac0119C04BA120464`
+txHash: `0x883fbe32308016e79418ae7b5121f912c016b843993b6d294e9a9eb09ef2a477`

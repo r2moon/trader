@@ -12,7 +12,7 @@ module.exports = {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(privKey, infuraUri),
       network_id: 1,
-      gasPrice: ethers.utils.parseUnits("41", "gwei").toString(),
+      gasPrice: ethers.utils.parseUnits("50", "gwei").toString(),
       gas: 6000000,
     },
     testnet: {

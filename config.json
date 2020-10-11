@@ -1,5 +1,5 @@
 {
-  "network": "kovan",
+  "network": "mainnet",
   "dryrun": false,
   "amount_token1_in_eth": 10,
   "save_to_mongodb": true,

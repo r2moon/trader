@@ -23061,6 +23061,19 @@
           ],
           "name": "GetRepayAmount",
           "type": "event"
+        },
+        "0xdbc92b0e8073269ba1a7edb49c82a1e75f0186dd6b20b8877727ef1efab184a0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "hit",
+              "type": "bool"
+            }
+          ],
+          "name": "Hit",
+          "type": "event"
         }
       },
       "links": {},
@@ -23217,7 +23230,7 @@
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-10-11T13:11:15.055Z",
+  "updatedAt": "2020-10-11T13:40:20.410Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}
