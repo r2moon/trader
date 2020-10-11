@@ -266,7 +266,7 @@ export enum Direction {
 }
 
 const saveInfo = async (record: Object) => {
-  if (config.save_to_mongodb) {
+  if (Util.Config.save_to_mongodb) {
     Util.Storage.saveToMongoDB(record, "priceInfo");
   } else {
     // else save to local file
@@ -277,7 +277,7 @@ const saveInfo = async (record: Object) => {
 };
 
 const saveArbInfo = async (arb: Object) => {
-  if (config.save_to_mongodb) {
+  if (Util.Config.save_to_mongodb) {
     Util.Storage.saveToMongoDB(arb, "arbs");
   }
   // save to local file
@@ -287,7 +287,7 @@ const saveArbInfo = async (arb: Object) => {
 };
 
 const saveTransactionHash = async (txHash: string) => {
-  if (config.save_to_mongodb) {
+  if (Util.Config.save_to_mongodb) {
     Util.Storage.saveToMongoDB({tx: txHash}, "txHash");
   }
   // save to local file
@@ -297,7 +297,7 @@ const saveTransactionHash = async (txHash: string) => {
 };
 
 const saveError = async (e: Error) => {
-  if (config.save_to_mongodb) {
+  if (Util.Config.save_to_mongodb) {
     Util.Storage.saveToMongoDB({error: e}, "txError");
   }
   // save to local file
@@ -308,21 +308,22 @@ const saveError = async (e: Error) => {
 
 // save event log to mongodb or local file
 const saveFlashloanEventLog = async (flashloan) => {
+  const hitEvent = flashloan.interface.getEvent("Hit");
   const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
+
+  const events = [hitEvent, newArbitrageEvent];
   const logs = await flashloan.provider.getLogs({
     fromBlock: 0,
     address: flashloan.address,
-    // topics: [flashloan.interface.getEventTopic(newArbitrageEvent)],
+    topics: [events.map((e) => flashloan.interface.getEventTopic(e))],
   });
 
   console.log(logs);
-  // remove me!
-  return;
 
   logs.forEach((log) => {
     const logData = flashloan.interface.parseLog(log);
-    const record = logData.args.toString();
-    if (config.save_to_mongodb) {
+    const record = logData.args.toString() + "\n";
+    if (Util.Config.save_to_mongodb) {
       Util.Storage.saveToMongoDB({log: record}, "profits");
     }
 
