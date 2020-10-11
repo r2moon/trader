@@ -1,5 +1,10 @@
 {
   "name": "flashloan",
+  "author": {
+    "name": "min",
+    "email": "route666@live.cn",
+    "url": "https://www.linkedin.com/in/min-ju"
+  },
   "version": "1.0.0",
   "description": "profitable flashloan",
   "license": "ISC",
