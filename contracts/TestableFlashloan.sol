@@ -63,9 +63,10 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
     uint256 balanceSrc = token1.balanceOf(address(this));
     uint256 deadline = block.timestamp + 300; // add 300 millisec buffer time just in case it exceeds trading deadline
 
+    // trigger    
     emit GetBalanceSrc(balanceSrc);
-    emit GetDirection(arbInfo.direction);
-
+    emit GetDirection(arbInfo.direction);   
+    
     require(
       arbInfo.direction == Direction.KyberToUniswap ||
         arbInfo.direction == Direction.UniswapToKyber ||
@@ -164,10 +165,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
     address _token1,
     address _token2,
     Direction _direction
-  ) external {    
-    // trigger
-    emit Hit(true);
-
+  ) external {
     // Get marketId from token address
     uint256 marketId = _getMarketIdFromTokenAddress(_solo, _token1);
 
@@ -175,7 +173,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
     // Approve transfer from
     uint256 repayAmount = _getRepaymentAmountInternal(_amount);
     IERC20(_token1).approve(_solo, repayAmount);
-
+    
     // 1. Withdraw $
     // 2. Call callFunction(...)
     // 3. Deposit back $
