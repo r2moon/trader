@@ -308,17 +308,15 @@ const saveError = async (e: Error) => {
 
 // save event log to mongodb or local file
 const saveFlashloanEventLog = async (flashloan) => {
-  const hitEvent = flashloan.interface.getEvent("Hit");
+  const events: any[] = [];
   const newArbitrageEvent = flashloan.interface.getEvent("NewArbitrage");
+  events.push(newArbitrageEvent);
 
-  const events = [hitEvent, newArbitrageEvent];
   const logs = await flashloan.provider.getLogs({
-    fromBlock: 0,
+    fromBlock: "latest",
     address: flashloan.address,
     topics: [events.map((e) => flashloan.interface.getEventTopic(e))],
   });
-
-  console.log(logs);
 
   logs.forEach((log) => {
     const logData = flashloan.interface.parseLog(log);
