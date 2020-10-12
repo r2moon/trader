@@ -6,6 +6,9 @@ WORKDIR /usr/src/app
 # Only copy the package.json and yarn.lock to work directory
 COPY package.json .
 
+# copy the patches file
+COPY patches .
+
 # Install all Packages
 RUN npm install
 
