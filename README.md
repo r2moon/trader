@@ -6,12 +6,6 @@
 yarn start
 ```
 
-## Check realtime token price
-
-```bash
-yarn fetch-price
-```
-
 ## Docker build
 
 ```bash
