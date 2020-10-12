@@ -16,6 +16,7 @@ export class Util {
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
+    static loop_interval = config.loop_interval_in_ms;
     static save_to_mongodb = config.network.toLowerCase() == "mainnet" && config.save_to_mongodb; // only save to mongodb on mainnet
     static useMainnetFork = config.network.toLowerCase() == "mainnetfork";
     static useTestnet = config.network.toLowerCase() == "kovan";

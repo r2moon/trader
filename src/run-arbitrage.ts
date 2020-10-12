@@ -89,8 +89,8 @@ const main = async () => {
         );
         await runArbitrage(token1, token2, i);
 
-        // rate limit. remove me when local geth node completes sync up
-        Util.sleep(1500);
+        // rate limit. remove it when local geth node completes sync up
+        Util.sleep(Util.Config.loop_interval);
       }
     }
   }
