@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 
 # copy the patches file
-COPY patches .
+COPY patches ./
 
 # Install all Packages
 RUN npm install
