@@ -1,3 +1,5 @@
+## This is a memo for myself - min 2020-10
+
 service geth stop
 
 umount /mnt/volume_sgp1_01
