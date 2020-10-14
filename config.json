@@ -9,5 +9,8 @@
   "uniswap_service_fee": 0.003,
   "profit_threshold": 10,
   "wait_blocks": 10,
-  "loop_interval_in_ms": 1000
+  "loop_interval_in_ms": 1000,
+  "mail_receivers": [
+    "lovelysaraislovely@gmail.com"
+  ]
 }

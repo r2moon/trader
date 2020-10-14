@@ -5,6 +5,7 @@ import truffleConfig from "../truffle-config";
 import {ethers} from "ethers";
 import chalk from "chalk";
 import {MongoClient} from "mongodb";
+import nodemailer from "nodemailer";
 
 export class Util {
   static Config = class {
@@ -103,6 +104,38 @@ export class Util {
     };
 
     static soloMarginAddress = ethers.utils.getAddress(addresses.dydx.solo);
+  };
+
+  static Mail = class {
+    static SendMail = async (txHash: string) => {
+      const user = process.env.SMTP_USERNAME || "";
+      if (!user) {
+        Util.Log.error("SMTP user invalid");
+        return;
+      }
+      const pass = process.env.SMTP_PASSWORD || "";
+      if (!pass) {
+        Util.Log.error("SMTP password invalid");
+        return;
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: "email-smtp.us-east-1.amazonaws.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user,
+          pass,
+        },
+      });
+
+      transporter.sendMail({
+        from: '"Flashloan Bot 🤖" <flashloan@digitalkaleido.com>',
+        to: config.mail_receivers.join(","),
+        subject: "Flashloan Found!",
+        html: `<b>${txHash}</b>`,
+      });
+    };
   };
 
   static sleep = (ms: number) => {
