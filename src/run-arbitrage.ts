@@ -18,7 +18,7 @@ if (dryrun) {
 }
 
 // read infura uri and private key from .env
-const infuraUri = Util.Env.infuraUri;
+const infuraUri = Util.Env.wssInfuraUri;
 if (!infuraUri) {
   Util.Log.error("⚠ Must assign INFURA_URI");
   process.exit();
@@ -37,7 +37,7 @@ if (!amount_token1_in_eth) {
 }
 
 // init provider and wallet
-const provider = new ethers.providers.JsonRpcProvider(infuraUri);
+const provider = new ethers.providers.WebSocketProvider(infuraUri);
 const wallet = new ethers.Wallet(privKey, provider);
 
 const network = Util.Config.network;
@@ -53,8 +53,8 @@ const soloMarginAddress = Util.Address.soloMarginAddress;
 const wait_blocks = Util.Config.wait_blocks;
 let wait_blocks_map: Map<string /* token1_token2 */, Array<number> /* index to skip */> = new Map();
 
-const token1List = Object.keys(addresses.tokens.token1);
-const token2List = Object.keys(addresses.tokens.token2);
+const token1 = Util.Config.token1;
+const token2 = Util.Config.token2;
 
 const eth = Util.Address.Token2.resolveToken("eth", 1);
 const dai = Util.Address.Token2.resolveToken("dai");
@@ -71,33 +71,16 @@ const contract = useTestnet
     };
 
 const main = async () => {
-  if (useTestnet) {
-    Util.Log.info("Running on Kovan testnet. Not all the token pairs are supported");
-  }
-
-  for (let i = 0; ; i++) {
-    for (let token1 of token1List) {
-      for (let token2 of token2List) {
-        // skip invalid pairs
-        if (await Util.skipPair(token1, token2)) {
-          continue;
-        }
-
-        // go
-        Util.Log.success(
-          `\n***********************************${moment().tz("Asia/Tokyo").format()}***************************************`
-        );
-        await runArbitrage(token1, token2, i);
-
-        // rate limit. remove it when local geth node completes sync up
-        Util.sleep(Util.Config.loop_interval);
-      }
-    }
-  }
+  Util.Log.info(`Running on network id ${network.network_id}`);
+  provider.on("block", async (block) => {
+    await runArbitrage(token1, token2, block);
+  });
 };
 
 const runArbitrage = async (token1Name: string, token2Name: string, index: number) => {
+  Util.Log.info(`block ${index}`);
   Util.Log.info(`👀 Token pair is ${token1Name}/${token2Name}`);
+
   const token1 = Util.Address.Token1.resolveToken(token1Name);
   const token2 = Util.Address.Token2.resolveToken(token2Name);
 

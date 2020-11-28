@@ -1,5 +1,5 @@
 {
-  "network": "mainnet",
+  "network": "kovan",
   "dryrun": false,
   "amount_token1_in_eth": 10,
   "save_to_mongodb": true,
@@ -9,9 +9,10 @@
   "uniswap_service_fee": 0.003,
   "profit_threshold": 10,
   "wait_blocks": 10,
-  "loop_interval_in_ms": 0,
   "mail_receivers": [
     "lovelysaraislovely@gmail.com",
     "kaka_0814@yahoo.co.jp"
-  ]
+  ],
+  "token1": "weth",
+  "token2": "mkr"
 }

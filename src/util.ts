@@ -17,11 +17,13 @@ export class Util {
     static uniswap_service_fee = config.uniswap_service_fee;
     static profit_threshold = config.profit_threshold;
     static wait_blocks = config.wait_blocks;
-    static loop_interval = config.loop_interval_in_ms;
     static save_to_mongodb = config.network.toLowerCase() == "mainnet" && config.save_to_mongodb; // only save to mongodb on mainnet
     static useMainnetFork = config.network.toLowerCase() == "mainnetfork";
     static useTestnet = config.network.toLowerCase() == "kovan";
     static useMainnet = config.network.toLowerCase() == "mainnet";
+    static token1 = config.token1.toLowerCase();
+    static token2 = config.token2.toLowerCase();
+
     static network = (() => {
       if (config.network.toLowerCase() == "mainnetfork") {
         return truffleConfig.networks.mainnetFork;
@@ -41,6 +43,7 @@ export class Util {
 
   static Env = class {
     static infuraUri = (Util.Config.useTestnet ? process.env.INFURA_TESTNET_URI : process.env.INFURA_URI) || "";
+    static wssInfuraUri = (Util.Config.useTestnet ? process.env.WSS_INFURA_TESTNET_URI : process.env.WSS_INFURA_URI) || "";
     static privKey = process.env.PRIVATE_KEY || "";
     static mongodb_pwd = process.env.MONGODB_PASSWORD || "";
   };
