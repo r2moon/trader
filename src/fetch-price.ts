@@ -29,7 +29,7 @@ const main = async () => {
   rl.question(chalk.yellow("* Select input token (dai | usdc | weth | * for all)\n"), async function (token1) {
     Util.Log.success(`👀 token1 is ${token1 == "*" ? "ALL" : token1}`);
 
-    rl.question(chalk.yellow("* Select output token (dai | usdc | weth | eth | bat | knc | link | mkr | * for all)\n"), async function (
+    rl.question(chalk.yellow("* Select output token (dai | usdc | weth | eth | bat | knc | link | mkr | uni * for all)\n"), async function (
       token2
     ) {
       Util.Log.success(`👀 token2 is ${token2 == "*" ? "ALL" : token2}`);

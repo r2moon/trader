@@ -9,6 +9,8 @@ services:
     image: ilovelili/flashloan:dai-weth
   dai-usdc:
     image: ilovelili/flashloan:dai-usdc
+  dai-uni:
+    image: ilovelili/flashloan:dai-uni
   weth-bat:
     image: ilovelili/flashloan:weth-bat
   weth-knc:
@@ -19,4 +21,6 @@ services:
     image: ilovelili/flashloan:weth-mkr
   weth-usdc:
     image: ilovelili/flashloan:weth-usdc
+  weth-uni:
+    image: ilovelili/flashloan:weth-uni
   

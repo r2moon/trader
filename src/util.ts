@@ -81,6 +81,7 @@ export class Util {
       static linkAddress = ethers.utils.getAddress(addresses.tokens.token2.link);
       static mkrAddress = ethers.utils.getAddress(addresses.tokens.token2.mkr);
       static batAddress = ethers.utils.getAddress(addresses.tokens.token2.bat);
+      static uniAddress = ethers.utils.getAddress(addresses.tokens.token2.uni);
 
       static resolveToken(token: string, amount?: number): Token {
         switch (token) {
@@ -100,6 +101,8 @@ export class Util {
             return new Token("bat", this.batAddress, amount);
           case "eth":
             return new Token("eth", this.ethAddress, amount);
+          case "uni":
+            return new Token("uni", this.uniAddress, amount);
           default:
             return Token.InvalidToken;
         }
@@ -155,8 +158,9 @@ export class Util {
   // skip invalid pairs
   static skipPair = async (token1: string, token2: string) => {
     if (Util.Config.useTestnet) {
+      return;
       // exclude the valid 3 pairs
-      return !((token1 == "dai" && token2 == "weth") || (token1 == "weth" && token2 == "mkr") || (token1 == "weth" && token2 == "dai"));
+      // return !((token1 == "dai" && token2 == "weth") || (token1 == "weth" && token2 == "mkr") || (token1 == "weth" && token2 == "dai"));
     }
 
     return (token1 == "weth" && token2 == "eth") || (token1 == "usdc" && token2 == "mkr") || token1 == token2;
