@@ -3,24 +3,35 @@ version: "3"
 services:
   dai-eth:
     image: ilovelili/flashloan:dai-eth
+    restart: always
   dai-link:
     image: ilovelili/flashloan:dai-link
+    restart: always
   dai-weth:
     image: ilovelili/flashloan:dai-weth
+    restart: always
   dai-usdc:
     image: ilovelili/flashloan:dai-usdc
+    restart: always
   dai-uni:
     image: ilovelili/flashloan:dai-uni
+    restart: always
   weth-bat:
     image: ilovelili/flashloan:weth-bat
+    restart: always
   weth-knc:
     image: ilovelili/flashloan:weth-knc
+    restart: always
   weth-link:
     image: ilovelili/flashloan:weth-link
+    restart: always
   weth-mkr:
     image: ilovelili/flashloan:weth-mkr
+    restart: always
   weth-usdc:
     image: ilovelili/flashloan:weth-usdc
+    restart: always
   weth-uni:
     image: ilovelili/flashloan:weth-uni
+    restart: always
   
