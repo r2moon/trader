@@ -23,7 +23,7 @@ module.exports = async function (deployer, network, [beneficiaryAddress, _]) {
       addresses.kyber.kyberNetworkProxy,
       addresses.uniswap.router,
       addresses.tokens.token1.weth,
-      beneficiaryAddress
+      "0xCD46321F885563aA203faBF1D2cc5e28A947e5AB"
     );
   }
 };

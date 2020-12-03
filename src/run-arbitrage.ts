@@ -230,7 +230,7 @@ const runArbitrage = async (token1Name: string, token2Name: string, index: numbe
         const txHash = recipt.transactionHash;
         Util.Log.info(`👀 Transaction hash: ${txHash}`);
         // send mail
-        Util.Mail.SendMail(txHash);
+        // Util.Mail.SendMail(txHash);
         saveTransactionHash(txHash);
         await saveFlashloanEventLog(flashloan);
       } catch (e) {
