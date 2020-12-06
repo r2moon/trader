@@ -46,8 +46,8 @@ export class Util {
     static wssInfuraUri = (Util.Config.useTestnet ? process.env.WSS_INFURA_TESTNET_URI : process.env.WSS_INFURA_URI) || "";
     static privKey = process.env.PRIVATE_KEY || "";
     static mongodb_pwd = process.env.MONGODB_PASSWORD || "";
-    static token1 = process.env.token1 || "";
-    static token2 = process.env.token2 || "";
+    static token1 = process.env.TOKEN1 || "";
+    static token2 = process.env.TOKEN2 || "";
   };
 
   static Address = class {
