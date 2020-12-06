@@ -1,4 +1,4 @@
-const Flashloan = artifacts.require("Flashloan.sol");
+const FlashloanUniswapKyber = artifacts.require("FlashloanUniswapKyber.sol");
 const TestFlashloan = artifacts.require("TestableFlashloan.sol");
 const {default: addresses} = require("../dest/addresses");
 
@@ -19,7 +19,7 @@ module.exports = async function (deployer, network, [beneficiaryAddress, _]) {
     console.log(`deploying flashloan to ${network}`);
 
     await deployer.deploy(
-      Flashloan,
+      FlashloanUniswapKyber,
       addresses.kyber.kyberNetworkProxy,
       addresses.uniswap.router,
       addresses.tokens.token1.weth,

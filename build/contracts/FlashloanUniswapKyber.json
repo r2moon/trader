@@ -20380,9 +20380,55 @@
     "name": "solc",
     "version": "0.5.16+commit.9c3226ce.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "1": {
+      "events": {
+        "0x11e944aca3539ba70760461542172892c68b0d8afb8f8eaf5aa7371d240ab5f2": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "enum FlashloanUniswapKyber.Direction",
+              "name": "direction",
+              "type": "uint8"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "token2",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "profit",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "date",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewArbitrage",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0xab4f043D5FB6F139582d972f2a414a05d1f65bD3",
+      "transactionHash": "0xfe12a6af3a0128a4955436dd83aab80421b474f044bc4cbb2f7d53557d55176a"
+    }
+  },
   "schemaVersion": "3.2.3",
-  "updatedAt": "2020-12-06T11:50:14.648Z",
+  "updatedAt": "2020-12-06T12:04:44.620Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },
