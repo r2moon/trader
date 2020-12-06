@@ -53,8 +53,8 @@ const soloMarginAddress = Util.Address.soloMarginAddress;
 const wait_blocks = Util.Config.wait_blocks;
 let wait_blocks_map: Map<string /* token1_token2 */, Array<number> /* index to skip */> = new Map();
 
-const token1 = Util.Config.token1;
-const token2 = Util.Config.token2;
+const token1 = Util.Env.token1; // Util.Config.token1;
+const token2 = Util.Env.token2; //Util.Config.token2;
 
 const eth = Util.Address.Token2.resolveToken("eth", 1);
 const dai = Util.Address.Token2.resolveToken("dai");
@@ -71,6 +71,10 @@ const contract = useTestnet
     };
 
 const main = async () => {
+  if (token1 == "" || token2 == "") {
+    Util.Log.info('Invalid token');
+    return;
+  }
   Util.Log.info(`Running on network id ${network.network_id}`);
   provider.on("block", async (block) => {
     await runArbitrage(token1, token2, block);
