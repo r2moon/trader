@@ -10,7 +10,7 @@ import addresses from "../addresses";
 import {TestableFlashloanFactory} from "../types/ethers-contracts/TestableFlashloanFactory";
 import TestableFlashloanContract from "../build/contracts/TestableFlashloan.json";
 import {FlashloanFactory} from "../types/ethers-contracts/FlashloanFactory";
-import FlashloanContract from "../build/contracts/Flashloan.json";
+import FlashloanContract from "../build/contracts/FlashloanUniswapKyber.json";
 
 const dryrun = Util.Config.dryrun;
 if (dryrun) {

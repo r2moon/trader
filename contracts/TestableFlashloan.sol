@@ -137,7 +137,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
       uint256[] memory amounts = uniswap.swapExactTokensForTokens(balanceSrc, minOuts[1], path, address(this), deadline);
 
       // Sell TOKEN2 on Kyber
-      uint256 balanceDest = amounts[0];
+      uint256 balanceDest = amounts[1];
       emit GetBalanceDest(balanceDest);
 
       require(token2.approve(address(kyber), balanceDest), "Could not approve! (UniswapTokenKyber Sell Token on Kyber)");

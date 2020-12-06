@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IUniswapV2Router02.sol";
 import "./IWeth.sol";
 
-contract Flashloan is ICallee, DydxFlashloanBase {
+contract FlashloanUniswapKyber is ICallee, DydxFlashloanBase {
   enum Direction {KyberToUniswap, UniswapToKyber, KyberTokenUniswap, UniswapTokenKyber}
 
   struct ArbInfo {
@@ -119,7 +119,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
       uint256[] memory amounts = uniswap.swapExactTokensForTokens(balanceSrc, minOuts[1], path, address(this), deadline);
 
       // Sell TOKEN2 on Kyber
-      uint256 balanceDest = amounts[0];
+      uint256 balanceDest = amounts[1];
       require(token2.approve(address(kyber), balanceDest), "Could not approve! (UniswapTokenKyber Sell Token on Kyber)");
       (uint256 expectedRate, ) = kyber.getExpectedRate(token2, token1, balanceDest);
       kyber.swapTokenToToken(token2, balanceDest, token1, expectedRate);
